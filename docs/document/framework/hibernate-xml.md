@@ -1,16 +1,12 @@
+
+# hibernate-xml
 ---
-title: hibernate-xml
-tags: java开发-曾,framework,hibernate
-renderNumberedHeading: true
-grammar_cjkRuby: true
----
+
 >这里我们讲讲以xml配置文件的方式来搭建hibernate框架
 
 ## 入门-简单配置  
 
-### 引入所需要的jar包
-
-> [点击这里，就能去我的github上下载所需要的jar包](https://github.com/zengxiaosong/javaRepository)  
+> 引入所需要的jar包 [点击这里，就能去我的github上下载所需要的jar包](https://github.com/zengxiaosong/javaRepository)  
 
 下载好jar包之后，将这些包复制到我们的项目中的==lib==文件中，（如何搭建web项目我们前面已经讲过，自己去看）    
 
