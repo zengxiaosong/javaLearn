@@ -263,4 +263,287 @@ public class HbnUtil {
 
 ```
 
-## dao层的增删改查操作   
+##    hibernate数据关联  
+---
+
+> 所谓的关联是什么意思呢？我们知道在数据库的表中存在外键的关联关系。以及一些其他的属性，既然我们用此框架来进行连接，那么我们这里的java层面也就应该存在这样的关联关系。即作为实体的bean之间的关联。  
+
+###  一对一关联    
+
+
+Hibernate针对一对一的关联关系提供了两种映射方法：
+1. 按照主键映射：这种映射方式要求两个数据表以主键相关联，即其中一个表的ID字段既是主键又是外键，两个表共享主键。
+2. 按照外键映射：这种映射方式要求以一个表中主键关联另一个表中外键，即一个表中的外键参照另一个表的主键。
+
+怎么来实现呢？我们先来看看主键关联的实现，下面我们使用汽车类和汽车号牌类来演示下，让汽车号牌的id作为主键，同时又是外键。（因为我们是先有汽车，再有汽车号牌，所以要在号牌类上面去关联汽车类）
+
+![car和carNumber类图](one/carClass.png)    
+
+**car的bean和xml配置文件**
+
+```
+public class Car {
+    private Integer id;
+    private String cname;
+    private CarNumber carNumber;
+
+    public Car() {
+    }
+
+    public Car( String cname, CarNumber carNumber) {
+        this.cname = cname;
+        this.carNumber = carNumber;
+    }
+
+    public void setCname(String cname) {
+        this.cname = cname;
+    }
+
+    public void setCarNumber(CarNumber carNumber) {
+        this.carNumber = carNumber;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public String getCname() {
+        return cname;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public CarNumber getCarNumber() {
+        return carNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "Car{" +
+                "id=" + id +
+                ", cname='" + cname + '\'' +
+                ", carNumber=" + carNumber +
+                '}';
+    }
+}
+
+//配置文件  
+
+<hibernate-mapping>
+    <!-- hbm配置文件的作用是
+    	（1）映射类和表
+    	（2）映射属性和字段
+     -->
+    <class name="com.zxs.bean.Car" table="car">
+        <id name="id" column="id">
+            <!--主键的生成策略是以carNumber 的主键作为本表的外键，id在本表中既是主键，同时又是外键-->
+           <generator class="foreign">
+               <param name="property">carNumber</param>
+           </generator>
+        </id>
+        <property name="cname" column="t_cname" />
+        <!--关联表在本表中能够显示-->
+        <one-to-one name="carNumber" class="com.zxs.bean.CarNumber" cascade="all" constrained="true" />
+    </class>
+
+</hibernate-mapping>
+
+```  
+**CarNumber的bean和xml配置文件**
+
+```
+public class CarNumber {
+    private Integer cid;
+    private String number;
+
+    public CarNumber() {
+    }
+
+    public void setCid(Integer cid) {
+        this.cid = cid;
+    }
+
+    public CarNumber(String number) {
+        this.number = number;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
+    public Integer getCid() {
+        return cid;
+    }
+
+    public String getNumber() {
+        return number;
+    }
+
+    @Override
+    public String toString() {
+        return "CarNumber{" +
+                "cid=" + cid +
+                ", number='" + number + '\'' +
+                '}';
+    }
+}  
+//配置文件
+
+<hibernate-mapping>
+    <!-- hbm配置文件的作用是
+    	（1）映射类和表
+    	（2）映射属性和字段
+     -->
+    <class name="com.zxs.bean.CarNumber" table="car_number">
+        <id name="cid" column="t_id">
+            <generator class="native"/>
+        </id>
+        <property name="number" column="t_number"/>
+    </class>
+
+</hibernate-mapping>
+
+```
+**两个类的dao层**
+
+```
+public interface CarDao {
+    public int insertCar(Car car);
+}
+
+public interface CarNumberDao {
+    public int insertCarNumber(CarNumber carNumber);
+}
+```
+**两个类的daoImpl层**  
+
+```
+public class CarDaoImpl implements CarDao {
+
+    private Session session = HbnUtil.getSession();
+    @Override
+    public int insertCar(Car car) {
+        try {
+            session.beginTransaction();
+            session.save(car);
+            session.getTransaction().commit();
+            return 1;
+        }catch (Exception e){
+            e.printStackTrace();
+            session.getTransaction().rollback();
+        }
+        return 0;
+    }
+}
+
+public class CarNumberDaoImpl implements CarNumberDao {
+
+    private Session session = HbnUtil.getSession();
+
+    @Override
+    public int insertCarNumber(CarNumber carNumber) {
+        try {
+            session.beginTransaction();
+            session.save(carNumber);
+            session.getTransaction().commit();
+            return 2;
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.getTransaction().rollback();
+            return 0;
+
+        }
+    }
+
+}
+
+```
+**测试代码**    
+
+```
+@Test
+    public void  insertCarTest(){
+        CarNumber carNumber = new CarNumber("521314");
+//        CarNumberDao carNumberDao = new CarNumberDaoImpl();
+//        int m = carNumberDao.insertCarNumber(carNumber);
+        Car car = new Car("本田",carNumber);
+        CarDao carDao = new CarDaoImpl();
+        int m = carDao.insertCar(car);
+        System.out.println("插入车牌：m = "+ m);
+
+    }
+```  
+**总结与值得注意的地方**    
+
+我们在做测试的时候并未向数据库中新建表，而是将新建表的任务交给了hibernate来处理。hibernate会帮助我们在数据库中去新建表，并填充数据，这是因为我们在```hibernate.cfg.xml```中配置了属性``` <property name="hibernate.hbm2ddl.auto">update</property>```,这大大减少了我们的工作量。 除了这个，还有一对一关联中的 主键之间的双向关联，外键关联的单向和双向。  
+
+理解了主键关联，这个外键关系非常简单，因为他就是多对一的一个特例，如果多端控制为1个的话，那不就是一对一了吗，这里要注意站的角度问题，多对一重点在多端，如果是一对多的话，重点在一端，一端本来就是1了，就没有所谓的特例了，所以还是要到多端去设置让他唯一，这样就打到了一对一关系，因此上面说的是多对一的一个特例，这样解释应该清楚了。如何设置多端唯一呢，通过一个属性 unique=ture。因此，只需要简单修改```Car```的配置文件就可以了。
+
+```
+<hibernate-mapping>
+    <!-- hbm配置文件的作用是
+    	（1）映射类和表
+    	（2）映射属性和字段
+     -->
+    <class name="com.zxs.bean.Car" table="car">
+        <id name="id" column="id">
+            <!--主键的生成策略是以carNumber 的主键作为本表的外键，id在本表中既是主键，同时又是外键-->
+           <generator class="foreign"/>
+        </id>
+        <property name="cname" column="t_cname" />
+        <!--关联表在本表中能够显示-->
+        <many-to-one name="carNumber" class="com.zxs.bean.CarNumber" column="cnid" cascade="all" unique="true" />
+    </class>
+
+</hibernate-mapping>
+```  
+**这里再简介一个关于 constrained="true" 的例子**  
+```  
+ @Test
+    public void Select(){
+        Session session = HbnUtil.getSession();
+        Car car=null;
+        try{
+            session.beginTransaction();
+            car =  session.get(Car.class,1);
+            //只会查第一个表
+            System.out.println(car);
+            //这里主要针对constrained="true"的一个测试。
+            //System.out.println(car.getCarNumber().getNumber());
+            session.getTransaction().commit();
+
+        }catch (Exception e){
+            e.printStackTrace();
+            session.getTransaction().rollback();
+        }
+        //session已经关闭，不能再继续查询
+       // System.out.println(car.getCarNumber().getNumber());
+    }
+
+```
+**关于constrianed的理解**
+constrained（约束） 
+可选, 表明该类对应的数据库表，和被关联的对象所对应的数据库表之间，通过一个外键引用对主键进行约束
+只能在one-to-one的映射中使用，（一般放在外键表中）默认值为false（无外键关系）  
+该选项最关键的是影响save()和delete()在级联执行时的先后顺序
+例如增加的时候，如果constainted=“true”,则会先增加关联表，然后增加本表。 删除的时候反之。
+one-to-one的单向关联中，如果constrained=false，则会在查询时就全部取出来，用left outer join的方式。如果constrained=true，hibernate即会延迟加载sql，只把主表的查出来，等有用到关联表的再发sql取。
+one-to-one的双向关联中，必须设置constrained=true，否则有重复数据读
+如2个表user，car；在为false时sql如下
+select * from user a left outer join car b on a.id=b.id left outer join on user c on a.id=c.id where a.id=?    
+
+**关于cascade的解释（主要用于一对多的操作，后面再详讲）**  
+
+cascade属性(级联属性)：描述表的级联关系，用于简化插入、更新、删除操作
+
+只要在cascade的源头上插入或是删除，所有cascade的关系就会被自动的插入或是删除
+
+cascade的取值有5种：
+none（默认值）: 所有情况下均不进行关联操作。 
+save-update: 在执行save/update/saveOrUpdate时进行关联操作
+save-update: 在执行save/update/saveOrUpdate时进行关联操作
+all: 所有情况下均进行关联操作，即save-update & delete
+all-delete-orphan: 当一个节点在对象图中成为孤儿节点时，删除该节点。比如在一个一对多的关系中，Student中有一个books集合包含2个book（book1、book2），当在books集合中删除book1时（例如执行remove()方法），book表里的book1即成为孤儿节点。当执行category.update(),或session.flush()时，hibernate同步缓存和数据库,会把数据库中book1对应的记录删掉也会被删除。
+
