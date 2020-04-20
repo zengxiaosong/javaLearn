@@ -1,7 +1,6 @@
 
 # hibernate-xml
 ---
-
 >这里我们讲讲以xml配置文件的方式来搭建hibernate框架
 
 ## 入门-简单配置  
@@ -538,12 +537,324 @@ select * from user a left outer join car b on a.id=b.id left outer join on user 
 
 cascade属性(级联属性)：描述表的级联关系，用于简化插入、更新、删除操作
 
-只要在cascade的源头上插入或是删除，所有cascade的关系就会被自动的插入或是删除
+```只要在cascade的源头上插入或是删除，所有cascade的关系就会被自动的插入或是删除```
 
 cascade的取值有5种：
 none（默认值）: 所有情况下均不进行关联操作。 
 save-update: 在执行save/update/saveOrUpdate时进行关联操作
 save-update: 在执行save/update/saveOrUpdate时进行关联操作
 all: 所有情况下均进行关联操作，即save-update & delete
-all-delete-orphan: 当一个节点在对象图中成为孤儿节点时，删除该节点。比如在一个一对多的关系中，Student中有一个books集合包含2个book（book1、book2），当在books集合中删除book1时（例如执行remove()方法），book表里的book1即成为孤儿节点。当执行category.update(),或session.flush()时，hibernate同步缓存和数据库,会把数据库中book1对应的记录删掉也会被删除。
+all-delete-orphan: 当一个节点在对象图中成为孤儿节点时，删除该节点。比如在一个一对多的关系中，Student中有一个books集合包含2个book（book1、book2），当在books集合中删除book1时（例如执行remove()方法），book表里的book1即成为孤儿节点。当执行category.update(),或session.flush()时，hibernate同步缓存和数据库,会把数据库中book1对应的记录删掉也会被删除。  
+
+> cascade(级联属性），怎么来理解这个概念了呢？ 就好比说，当有一个class(班级)表和一个student(学生)表的时候，student表上面是有class表的外键的，这个时候你想删除某个class,但是按照规定来讲，我们必须先删除student表上面与class表有关的字段，在我们的hibernate中，当我们需要这个操作时，就能用对象的操作属性直接删除class.即我们前面所说的源头操作。
+
+### 一对多关联（多对多关联）
+
+> 比如班级和学生就是一对多的关系。接下来我们直接看代码，即不做其他解释了。
+
+***clsss的 bean,xml***   
+```
+
+<hibernate-mapping>
+    <!-- hbm配置文件的作用是
+    	（1）映射类和表
+    	（2）映射属性和字段
+     -->
+    <class name="com.zxs.bean.MyClass" table="t_class">
+
+        <id name="id" column="classId">
+            <generator class="native"/>
+        </id>
+        <property name="name" column="class_name" />
+        <property name="description" column="class_dec"/>
+
+        <!--一对多的设置过程-->
+        <set name="myStudents" cascade="all">
+            <key column="t_class_id"/>
+            <one-to-many class="com.zxs.bean.MyStudent"/>
+        </set>
+    </class>
+
+package com.zxs.bean;
+
+import java.util.HashSet;
+import java.util.Set;
+
+/*
+ *@author by java开发-曾
+ *2020/4/20 11:40
+ *文件说明：
+ */
+public class MyClass {
+    private Integer id;
+    private String name;
+    private String description;
+    Set<MyStudent> myStudents = new HashSet<>();
+
+
+
+    public Set<MyStudent> getMyStudents() {
+
+        return myStudents;
+    }
+
+    public void setMyStudents(Set<MyStudent> myStudents) {
+        this.myStudents = myStudents;
+    }
+
+    public MyClass() {
+    }
+
+    public MyClass(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "MyClass{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
+}
+
+```
+ ***student 的 bean, xml***   
+ ```
+ 
+<hibernate-mapping>
+    <!-- hbm配置文件的作用是
+    	（1）映射类和表
+    	（2）映射属性和字段
+     -->
+    <class name="com.zxs.bean.MyStudent" table="t_student">
+        <id name="id" column="student_id">
+            <generator class="native"/>
+        </id>
+        <property name="name" column="student_name"/>
+        <property name="description" column="student_desc"/>
+
+        <!--关于一对多的操作过程中，如果要进行双向关联的操作，只需要引入下面的配置信息即可-->
+        <many-to-one name="myClass" column="t_class_id" />
+    </class>
+
+package com.zxs.bean;
+
+/*
+ *@author by java开发-曾
+ *2020/4/20 11:46
+ *文件说明：
+ */
+public class MyStudent {
+    private Integer id;
+    private  String name;
+    private  String description;
+    private MyClass myClass;
+
+    public MyStudent() {
+    }
+
+    public MyStudent(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public MyClass getMyClass() {
+        return myClass;
+    }
+
+    public void setMyClass(MyClass myClass) {
+        this.myClass = myClass;
+    }
+
+    @Override
+    public String toString() {
+        return "MyStudent{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
+}
+
+ ```
+***测试代码*** 
+```
+package com.zxs.test;
+
+import com.zxs.bean.MyClass;
+import com.zxs.bean.MyStudent;
+import com.zxs.util.HbnUtil;
+import org.hibernate.Session;
+import org.junit.Test;
+
+import java.util.Iterator;
+import java.util.Set;
+
+/*
+ *@author by java开发-曾
+ *2020/4/20 15:05
+ *文件说明：
+ */
+public class ClassStudentTest {
+
+    //默认给的一个静态的session的变量值
+    Session session = HbnUtil.getSession();
+
+    //只增加班级
+    @Test
+    public void classSave(){
+        try {
+            session.beginTransaction();
+            MyClass myClass =new MyClass();
+            myClass.setName("5班");
+            myClass.setDescription("很好的班");
+//            MyStudent myStudent = new MyStudent();
+//            myStudent.setName();
+            session.save(myClass);
+            session.getTransaction().commit();
+        }catch (Exception e){
+            e.printStackTrace();
+            session.getTransaction().rollback();
+        }
+    }
+
+    //添加数据，这里可以看下是怎么添加的
+    @Test
+    public void  classAndStudent(){
+        try{
+            session.beginTransaction();
+            MyClass myClass = new MyClass();
+            myClass.setName("4班");
+            myClass.setDescription("这是4班");
+
+            MyStudent myStudent = new MyStudent();
+            myStudent.setName("贾鑫");
+            myStudent.setDescription("傻子");
+
+            myClass.getMyStudents().add(myStudent);
+
+            session.save(myStudent);
+            session.save(myClass);
+
+            session.getTransaction().commit();
+        }catch (Exception e){
+            e.printStackTrace();
+            session.getTransaction().rollback();
+        }
+    }
+
+    //查找班级
+    @Test
+    public void selectClass(){
+            session.beginTransaction();
+            MyClass myClass = session.get(MyClass.class,1);
+            System.out.println(myClass);
+            Set<MyStudent> students = myClass.getMyStudents();
+            Iterator it = students.iterator();
+            while (it.hasNext()) {
+                System.out.println(it.next());
+            }
+    }
+
+    //查找班级并且添加学生
+    @Test
+    public void selectAndInsert(){
+        try{
+            session.beginTransaction();
+            MyClass myClass = session.get(MyClass.class,2);
+
+            MyStudent myStudent = new MyStudent();
+            myStudent.setName("李欣");
+            myStudent.setDescription("呼呼");
+            myStudent.setMyClass(myClass);
+
+            session.save(myStudent);
+            session.getTransaction().commit();
+        }catch (Exception e){
+            e.printStackTrace();
+            session.getTransaction().rollback();
+        }
+    }
+
+    //做删除操作,这里就有级联操作。因为student表中有class的外键，所以class表是不能直接删除的，但是级联操作可以帮助我么去完成。
+    @Test
+    public void delete(){
+        try{
+            session.beginTransaction();
+            MyClass myClass = session.get(MyClass.class,2);
+            session.delete(myClass);
+            session.getTransaction().commit();
+        }catch (Exception e){
+            e.printStackTrace();
+            session.getTransaction().rollback();
+        }
+    }
+}
+
+```  
+
+> 数据库的表我就不添加了，因为hibernate的自动更新配置会在数据库中添加我们需要的表。这里我也没有再添加dao层了。   
+
+### 多对多关联  
+
+> 后面增加   
+
+### HQL查询语句  
+
+
+
+### 分页查询  
+
+### 补充
 
