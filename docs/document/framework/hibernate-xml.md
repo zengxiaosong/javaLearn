@@ -548,11 +548,11 @@ all-delete-orphan: 当一个节点在对象图中成为孤儿节点时，删除�
 
 > cascade(级联属性），怎么来理解这个概念了呢？ 就好比说，当有一个class(班级)表和一个student(学生)表的时候，student表上面是有class表的外键的，这个时候你想删除某个class,但是按照规定来讲，我们必须先删除student表上面与class表有关的字段，在我们的hibernate中，当我们需要这个操作时，就能用对象的操作属性直接删除class.即我们前面所说的源头操作。
 
-### 一对多关联（多对多关联）
+### 一对多关联（多对一关联）
 
 > 比如班级和学生就是一对多的关系。接下来我们直接看代码，即不做其他解释了。
 
-***clsss的 bean,xml***   
+***class的 bean,xml***   
 ```
 
 <hibernate-mapping>
@@ -850,11 +850,11 @@ public class ClassStudentTest {
 
 > 后面增加   
 
-### HQL查询语句  
+## HQL查询语句  
 
 
 
-### 分页查询  
+## 分页查询  
 
-### 补充
+## 补充
 
