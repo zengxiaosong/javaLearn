@@ -2,8 +2,6 @@
 
 ### 1.前言
 
-
-
 > 接下来我们将进入springMVC框架的学习，在学习这个框架之前，我们应该做一些知识的预备，比如说什么是MVC模式？``` M: model V:view C :controllor``` 可能到这里大家还是比较迷糊，那我们通过这个MVC来看看我们所应用的框架的工作模式和工作原理是怎么样的呢？我们通过原理图来看看吧！
 
 ![image-20200528214029882](one\image-20200528214029882.png)
@@ -27,6 +25,10 @@
     <servlet>
         <servlet-name>springMVC</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <!--<init-param> 用来描述文件的位置-->
+        <!--<param-name>contextConfigLocation</param-name>-->
+        <!--<param-value>classpath:springMVC-swervlet.xml</param-value>-->
+        <!--</init-param>-->
     </servlet>
     <servlet-mapping>
         <servlet-name>springMVC</servlet-name>
@@ -71,5 +73,153 @@
 
 这下想必就十分清晰了。返回的就是视图jsp的名称。然后大家点击运行就能查看效果了。
 
+当然，最好的是在我们的springMVC的配置文件上加上这样一个配置：
+
+```xml
+<!--注解扫描的配置-->
+    <mvc:annotation-driven/>
+```
+
 ### 3.几个基本的注解
 
+#### @Controller 
+
+以前在编写```Controller``` 方法的时候，需要开发者自定义一个```Controller``` 类实现Controller接口，实现```handleRequest``` 方法返回```ModelAndView``` 。并且需要在Spring配置文件中配置Handle，将某个接口与自定义```Controller``` 类做映射。
+
+这么做有个复杂的地方在于，一个自定义的```Controller``` 类智能处理一个单一请求。而在采用```@Contoller``` 注解的方式，可以使接口的定义更加简单，将```@Controller``` 标记在某个类上，配合```@RequestMapping``` 注解，可以在一个类中定义多个接口，这样使用起来更加灵活。
+
+被```@Controller``` 标记的类实际上就是个```SpringMVC Controller``` 对象，它是一个控制器类，而```@Contoller``` 注解在```org.springframework.stereotype``` 包下。其中被```@RequestMapping``` 标记的方法会被分发处理器扫描识别，将不同的请求分发到对应的接口上。  
+
+####  @RequestMapping （重要）
+
+设置路由信息的注解，也就是说，当我们的浏览器端发起请求时，请求通过```web.xml``` ,再通过```springMVC-servlet.xml``` 到我们通过注解@Controller注解控制的类时，会去和```@RequestMapping``` 上设置的注解进行比较，以此到达所设置的接口方法。  值得注意的是：注解 ```@RequestMapping```  即可以设置在方法上，也可以设置在类上。通过下面的例子说明：
+
+```java
+@Controller
+//在最前面可以加这个 /  也可以不加，这个在不加的时候，系统可以默认给加上
+//@RequestMapping(value="first/")
+@RequestMapping("/first/")
+public class BaseController {
+
+    @RequestMapping("hello1")
+    public String hello(){
+        return "success";
+    }
+
+}
+```
+
+当然，```@RequestMapping``` 不可能就这么简单，上面我们都是使用的默认参数，接下来我们看看里面还有几个参数，我们直接来看看源码是怎么的: 
+
+```java
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Mapping
+public @interface RequestMapping {
+    String name() default "";
+
+    @AliasFor("path")
+    String[] value() default {};
+
+    @AliasFor("value")
+    String[] path() default {};
+
+    RequestMethod[] method() default {};
+
+    String[] params() default {};
+
+    String[] headers() default {};
+
+    String[] consumes() default {};
+
+    String[] produces() default {};
+}
+```
+
+1. value: 这是我们的默认参数，也是我们使用的最频繁的。表示路由信息。
+
+   ```java
+   @RequestMapping(value = "first/hello")
+   public String hi(){
+       return "success";
+   }
+   ```
+
+2. method：指定请求的method类型， GET、POST、PUT、DELETE等,一共有八种类型，不过，这里我们最常用的也就是这四种类型，这四种类型也会与我们的Restful风格进行匹配。当然，后面我们会对这种风格进行大致的讲解。
+
+   ```java
+   @RequestMapping(value = "first/hello", method = RequestMethod.GET)
+   public String hi(){
+       return "success";
+   }
+   ```
+
+   为什么说是八种呢，从上面的代码中，我们可以看出，method参数的值是一个枚举类型，我们看看这个枚举类型有哪些：
+
+   ```java
+   package org.springframework.web.bind.annotation;
+   
+   public enum RequestMethod {
+       GET,
+       HEAD,
+       POST,
+       PUT,
+       PATCH,
+       DELETE,
+       OPTIONS,
+       TRACE;
+   
+       private RequestMethod() {
+       }
+   }
+   ```
+
+3. params： 指定request中必须包含某些参数值是，才让该方法处理。什么意思呢？就是说当你发起请求后，你请求后面的参数必须包含哪些内容，不能包含哪些内容，在这个参数里面就做出了规定。
+
+   ```java
+   /*
+    * 表示参数中必须让id=23 名字name必须不能是admin,否者将不能匹配到这个方法中，
+    */
+   @RequestMapping(value = "first/hello", method = RequestMethod.GET, params = {"id=23","name!=admin"})
+   public String hi(){
+       return "success";
+   }
+   ```
+
+4. 其他的几种类型就不过多讲解了，用到的时候再去看看，了解下。
+
+当然，@RequestMapping也是支持Ant路径风格的，**Ant** **风格资源地址支持** **3** **种匹配符** 
+
+```?``` 匹配文件名中的一个字符
+
+ ```*``` 匹配文件名中的任意字符 
+
+```**``` 匹配多层路径
+
+举个例子：
+
+hello/*/aaa              =>     hello/bba/aaa  或者是 hello/sfm/aaa;
+
+hello/**/aaa             =>     hello/ccc/bbb/aaa  (嵌入了多层)
+
+hello/aa??              =>      hello/aabb          或者是  hello/aacd
+
+#### @PathVariable（与上对应）
+
+当我们在发送请求时，我们可以将路由中的值通过参数绑定传递到我们的方法中去进行一定的事物处理。实现过程如下：
+
+```
+/*
+ * 访问可以是：http:8080/test0528/first/hello1/22
+ */
+@RequestMapping("hello1/{id}")
+public String hello(@PathVariable("id") Integer id){
+    System.out.println(id);
+    return "success";
+}
+```
+
+### 4. Restul风格简单介绍
+
+简单来说，这就是一个前后端框架开发的接口规范
