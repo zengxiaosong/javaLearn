@@ -222,4 +222,269 @@ public String hello(@PathVariable("id") Integer id){
 
 ### 4. Restul风格简单介绍
 
-简单来说，这就是一个前后端框架开发的接口规范
+简单来说，这就是一个前后端框架开发的接口规范（后面再介绍）
+
+### 5.处理请求的数据
+
+> 前面我们都是对路由URL进行分析，我们再来看看如何对URL请求的参数进行处理，以及如何去获取我们加上的参数。
+
+#### 1.直接获取参数
+
+> 将我们从前端页面上获取的数据发送到服务器后台上，并打印出来，目前不支持中文（如果遇到中文乱码，请看解决乱码的部分）
+
+html部分：
+
+```html
+<%--直接获取参数的表单--%>
+<form action="getForm1" method="post">
+   <input type="text" name="userName" /><br/>
+   <input type="password" name="password" /><br/>
+   <input type="submit" value="提交"><br/>
+</form>
+```
+
+控制器部分：
+
+```java
+@RequestMapping(value = "/getForm1" )
+public String getForm(String userName, String password){
+    System.out.println("userName: "+userName + " password: "+password);
+    return "success";
+}
+```
+
+当然，这种直接获取参数的方法还是比较常用的，控制台就会直接打印对应的数据乐。但是我们要想一个问题，他是如何获取的？从上面我们可以看出，接口方法的参数名称和我们表单提交的参数名称是相同的，那么我们将接口方法中的```userName``` 改写成  ```username``` 是否能获取这个参数呢？肯定是不能的，所以我们在使用这种形式的时候要注意写法。
+
+#### 2. 通过注解@RequestParam获取参数
+
+> 同样的，我们先来看看源码部分有什么内容，再通过这个内容来讲解下具体的用法。源码如下：
+
+```java
+@Target({ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface RequestParam {
+    @AliasFor("name")
+    String value() default "";
+
+    @AliasFor("value")
+    String name() default "";
+
+    boolean required() default true;
+
+    String defaultValue() default "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n";
+}
+```
+
+我们来详解下这个注解的参数是什么个意思，参数有：```name, value, required, defaultValue,``` 从上面的代码中我们可以看出其实 value，和name 是一样的，他们是互相引用值，所以在使用的过程中，只使用一个就行了，如果两个都用上并且值不一样的话，就会报错。
+
+1. value,name 这两个参数表示传值的参数名，也就是表单中或者直接是GET请求中传递值的名称。比如```  <input type="text" name="userName" /><br/>```中的**userName**。
+2. required 参数，他表示我们请求的这个参数是否是必须的，从源码中可以看出，默认值是true,也就是说默认是必须要传值的，当然，根据需要你可以改变需求为```required=false``` .
+3. defaultValue表示默认值，也就是说，如果没有传这个值，后面跟随的参数将会被赋予一个默认值，这个默认值是String类型的。当然，这里值得注意的是，如果说没有默认值，也没有传递参数，那么后面定义参数的值就会被赋予null值。**这里有一个隐藏的错误点，要注意下，当我们被赋予null值时，是不是应该想下，null是引用类型的，那int  float  boolean等八种基本形式的数据类型能被这样赋值吗？肯定是不可以的啊，那不报错才怪了。 **
+
+我们用上面的表单写一个具体的用法如下：(补充下，比如我们前面在value中就规定了传递的参数，那么后面参数如：String name)就不用与表单保持一致了，
+
+```java
+@Controller
+public class BaseController {
+
+    @RequestMapping(value = "/getForm1" )
+    public String getForm(@RequestParam(value = "userName",
+                                        required = false,
+                                        defaultValue = "hello"
+                                       )String name, String password){
+        System.out.println("username: "+name + " password: "+password);
+        return "success";
+    }
+```
+
+那么可能有部分人就会怀疑了，既然我们能直接获取了，为啥还要使用这种形式呢？我们继续往后面看看吧。再来看两个注解。
+
+#### 3. @RequestHeader
+
+同样先看下源码：
+
+```java
+@Target({ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface RequestHeader {
+    @AliasFor("name")
+    String value() default "";
+
+    @AliasFor("value")
+    String name() default "";
+
+    boolean required() default true;
+
+    String defaultValue() default "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n";
+}
+```
+
+从这个源码来看，形式是一样的，这个就没啥讲的了，但是注意的是，请求头是包含了很多的信息的，具体我截了张图，大家可以参考下：
+
+![image-20200601220437597](one\image-20200601220437597.png)
+
+然后还是给一个例子吧：比如说获取accept-language: (当然这不是很常用，我们知道有这么个用法就可以了)
+
+```java
+@RequestMapping(value = "/getForm1" )
+public String getForm(@RequestParam(value = "userName", required = false, defaultValue = "hello")String name,
+                      String password,
+                    @RequestHeader(value = "accept-language")String language){
+    System.out.println("username: "+name + " password: "+password);
+    System.out.println("language:" +language);
+    return "success";
+}
+```
+
+#### 4. @CookieValue
+
+如同上面一样，看下源码是怎么回事吧：(模式都是相同的，我们就不做讲解了，就是通过获取键值对来获取)
+
+```java
+@Target({ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface CookieValue {
+    @AliasFor("name")
+    String value() default "";
+
+    @AliasFor("value")
+    String name() default "";
+
+    boolean required() default true;
+
+    String defaultValue() default "\n\t\t\n\t\t\n\ue000\ue001\ue002\n\t\t\t\t\n";
+}
+```
+
+#### 5. 通过POJO获取参数
+
+什么是POJO,(Plain Ordinary Java Objects),就是一个普通简单的javaBean,怎么来用呢？我们都知道，比如我们的注册信息，注册的是一个用户的基本信息，那我们是不是可以说我们要传递一个类进去，信息都封装为属性，然后通过这个类将信息传递到后端中，是不是更加的方便写。也能够更加详细。
+
+既然是javabean,那我们先创建相关的bean包，再在包下面创建相关的类。
+
+首先是User类：
+
+```java
+package com.zxs.beans;
+
+/*
+ *@author by java开发-曾
+ *2020/6/1 22:32
+ *文件说明：
+ */
+public class User {
+    private String userName;
+    private String password;
+    private Address address;
+
+    public User() {
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "userName='" + userName + '\'' +
+                ", password='" + password + '\'' +
+                ", address=" + address +
+                '}';
+    }
+}
+```
+
+然后是地址Address类：
+
+```java
+package com.zxs.beans;
+
+/*
+ *@author by java开发-曾
+ *2020/6/1 22:34
+ *文件说明：
+ */
+public class Address {
+    private  String country;
+    private  String email;
+
+    public Address() {
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    @Override
+    public String toString() {
+        return "Address{" +
+                "country='" + country + '\'' +
+                ", email='" + email + '\'' +
+                '}';
+    }
+}
+```
+
+我们既然是通过属性绑定的，那么表单上元素的name属性是怎么命名的：（**注意与User类对照看，属性与名称是相同的**）
+
+```html
+<%--POJO获取参数的表单--%>
+<form action="getForm1" method="post">
+   姓名：<input type="text" name="userName" /><br/>
+   密码：<input type="password" name="password" /><br/>
+   国家：<input type="text" name="address.country"/><br/>
+   邮箱：<input type="text" name="address.email"/><br/>
+   <input type="submit" value="提交"><br/>
+</form>
+```
+
+再来看看控制器怎么操作的吧：
+
+```java
+@RequestMapping(value = "/getForm1" )
+public String getForm(User user){
+    System.out.println(user);
+    return "success";
+}
+```
+
+当然，要获取请求传递过来的参数，还可以通过原生的ServletAPI实现，当然要涉及到源码和原理部分，这里我们就不去细讲了，有兴趣的可以多去了解下。
+
+### 6. 控制器如何处理数据
+
