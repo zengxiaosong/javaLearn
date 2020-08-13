@@ -8,6 +8,6 @@
 
 > **rescue** 营救，救援
 
-> fundamental   基本的，基础的，  n:基本法则，基本原则
+> **fundamental**   基本的，基础的，  n:基本法则，基本原则
 
-> contrary   相反的，对抗的
+> **contrary**   相反的，对抗的
