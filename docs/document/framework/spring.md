@@ -485,7 +485,7 @@ private Map<String,Object> stringObjectMap;
 
 什么叫bean的作用域呢？这里做下解释说明：这里的话，我们先简单介绍两种，singleton(单例)，prototype(多例)，下面结合代码来做分别的解释吧。
 
-![img](https://img-blog.csdn.net/20160417164310654?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center)
+![](one\20160417164310654.png)
 
 #### （1）singleton(单例)
 
