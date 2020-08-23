@@ -4,6 +4,7 @@
 
   * [Java基础](./document/java/guide.md)  
   * [java深入](./document/java/javaMore.md)
+  * [java的设计模式](./document/java/javaDesign.md)
 * js
 
   * [js基础](./document/js/js.md)  
