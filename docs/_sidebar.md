@@ -1,24 +1,34 @@
 
 
-* Java
+* # 一、Java
 
   * [Java基础](./document/java/guide.md)  
   * [java深入](./document/java/javaMore.md)
   * [java的设计模式](./document/java/javaDesign.md)
-* js
+
+* # 二、js
 
   * [js基础](./document/js/js.md)  
-* IDEA相关  
+  
+  
+* # 三、IDEA相关  
 
   * [建立基本的网页](./document/idea/web.md)
-* framework  
+  
+  
+* # 四、framework 学习
 
   * [hibernate-xml](./document/framework/hibernate-xml.md)  
   * [springMVC](./document/framework/springMVC.md)
   * [spring](./document/framework/spring.md)
-* 面试相关  
+  
+  
+* # 五、面试相关  
   
   * [java基本类型](./document/face/java/base.md)  
   
-* 英语四级学习
+  
+  
+* # 六、英语四级学习
+  
   * [英语四级单词](./document/english/etc4.md)

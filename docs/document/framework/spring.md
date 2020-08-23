@@ -539,7 +539,217 @@ public void myTest(){
 
 ####  （1）简单生命周期
 
+spring容器既然创建了bean，那么。就会对该bean的生命周期进行管理，也就是说，spring会对该bean在特定时期进行的任务（执行的方法）进行管理。
+
+spring进行管理的过程如下：
+
+* 通过构造器或者工厂方法创建bean 。
+* 为bean设置属性以及其他bean的引用。
+* 调用bean的初始化方法。
+* bean的使用。
+* 当容器关闭时，bean被摧毁了。
+
+接下来，我们就对这几种方法进行代码化，：
+
+先来创建一个bean,  具体部分的解释，我就放在代码里面了，请认真看代码：
+
+```java
+package com.zxs.live;
+
+/*
+ *@author by java开发-曾
+ *2020/8/23 14:59
+ *文件说明：
+ */
+public class Person {
+
+    private Integer id;
+    private String name;
+
+    public Person() {
+        System.out.println("1：创建生成");
+    }
+
+    public Person(Integer id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        System.out.println("2：属性配置");
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /*
+        下面的init(),destroy()是原来方法中没有的方法，
+        这是我们自己加上去的，并且在配置文件中进行配置的生命周期方法
+
+     */
+    public void init(){
+        System.out.println("3：bean初始化");
+    }
+
+    public void destroy(){
+        System.out.println("5:bean摧毁");
+    }
+
+
+    @Override
+    public String toString() {
+        System.out.println("4:bean调用");
+        return "Person{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
+    }
+}
+```
+
+`applicationContext.xml:`(*配置文件中增加了 `init-method`   `destroy-method`*)
+
+```xml
+<bean id="person" class="com.zxs.live.Person" init-method="init" destroy-method="destroy" >
+    <property name="id" value="11"/>
+    <property name="name" value="冰冰"/>
+</bean>
+```
+
+测试代码Test类：
+
+```java
+@Test
+public void  liveTest(){
+    ClassPathXmlApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+    Person person = ac.getBean("person", Person.class);
+    System.out.println(person);
+    ac.close();
+}
+```
+
+实际效果如下：
+
+![image-20200823152216691](one\image-20200823152216691.png)
+
 #### （2）复杂生命周期
 
+为啥叫做复杂生命周期呢？那肯定增加了新的内容嘛，也就是说在`init()`方法的前后各自增添一个调用方法，于是五步的生命周期就成了7步了。**当然，这里必须说明的是，这种配置方式会给所有的实例，也就是容器中所有的对象添加。所以，在配置的时候要注意。**
 
+要实现这种配置，首先我们要用到一个接口：`org.springframework.beans.factory.config.BeanPostProcessor;` 让一个类来调用实现：
+
+```java
+package com.zxs.config;
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+
+/*
+ *@author by java开发-曾
+ *2020/8/23 15:30
+ *文件说明：
+ */
+public class AfterBean implements BeanPostProcessor{
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("init之前要做的事");
+        return bean;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("init之后要做的事");
+        return bean;
+    }
+}
+```
+
+然后将这个类配置到我们的配置文件中：（这里的id没有实际作用，可以不需要）
+
+```xml
+<bean id="beanAfter" class="com.zxs.config.AfterBean">
+</bean>
+```
+
+产生的效果如下：（***再次提醒，是容器中所有对象都会被配置***）
+
+![image-20200823155356772](one\image-20200823155356772.png)
+
+### 3、引用外部属性文件
+
+在java的开发过程中，我们要知道，一些静态常量，我们可以保存在静态类中，当然，也可以保存在一些属性文件中，静态类我们就不说了，那么属性文件怎么来用呢？特别是遇到像数据库这样的，用户名啊啥的。下面我们来看看实例吧。
+
+先添加数据库配置信息如下：（配置的数据库的基本信息就是你自己的数据库基本信息了）
+
+```xml
+<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+    <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+    <property name="url" value="jdbc:mysql://localhost/test"/>
+    <property name="username" value="root"/>
+    <property name="password" value="你自己的密码"/>
+</bean>
+```
+
+测试如下：
+
+```java
+@Test
+public void  liveTest(){
+    ClassPathXmlApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+    DruidDataSource dataSource = ac.getBean("dataSource", DruidDataSource.class);
+    System.out.println(dataSource);
+}
+```
+
+效果如下，成功显示：
+
+![image-20200823163446285](one\image-20200823163446285.png)
+
+当然，如果我们的数据库就这样写死了，是不太好的，加入属性文件一起来展示吧。先在你的资源文件下，也就是你的`applicationContext.xml`的同目录下添加文件`applcation.properties`,里面内容如下所示，当然，属性名你可以自己做修改：
+
+```properties
+# 配置数据库相关的信息
+application.mysql.driver=com.mysql.jdbc.Driver
+application.mysql.url=jdbc:mysql://localhost:3306/test
+application.mysql.username=root
+application.mysql.password=你自己的密码
+```
+
+当然，现在还是不能用的，要将这些属性引入到我们的配置文件中才行：（两种方式任选一种，不过第二种已经被弃用了，最好用第一种）
+
+```xml
+<!--引入外部属性文件-->
+<context:property-placeholder location="application.properties"/>
+```
+
+```xml
+<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="location" value="application.properties"/>
+</bean>
+```
+
+最后修改我们数据库相关的配置如下：(得到同样的效果)
+
+```xml
+<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+    <property name="driverClassName" value="${application.mysql.driver}"/>
+    <property name="url" value="${application.mysql.url}"/>
+    <property name="username" value="${application.mysql.username}"/>
+    <property name="password" value="${application.mysql.password}"/>
+</bean>
+```
+
+### 4、自动装配
+
+什么是自动装配呢？自动装配针对的是啥？自动装配针对的是bean里面的引用类型属性，不去配置值，让他自动配置。如果你做过项目，肯定会遇到这样的注解：`@Autoward`, 这就是自动装配。
 
