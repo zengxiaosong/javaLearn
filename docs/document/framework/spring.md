@@ -751,5 +751,139 @@ application.mysql.password=你自己的密码
 
 ### 4、自动装配
 
-什么是自动装配呢？自动装配针对的是啥？自动装配针对的是bean里面的引用类型属性，不去配置值，让他自动配置。如果你做过项目，肯定会遇到这样的注解：`@Autoward`, 这就是自动装配。
+什么是自动装配呢？自动装配针对的是啥？自动装配针对的是bean里面的引用类型属性，不去配置值，让他自动配置。如果你做过项目，肯定会遇到这样的注解： `@Autowired`, `@Resource`这就是自动装配。注解我们后面再讲，先通过配置文件的形式把原理看懂。
+
+现在用的最多自动装配形式有两种：
+
+					*    `byName` (通过名字自动装配)
+					*    `byType` (通过类型自动装配)
+
+#### （1）byName
+
+在前面的基础上，添加一个Teacher类：
+
+```java
+package com.zxs.auto;
+
+import com.zxs.scope.Student;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 10:18
+ *文件说明：
+ */
+public class Teacher {
+    private Integer tid;
+    private String tname;
+    private Student student;
+
+    public Teacher() {
+    }
+
+    public Teacher(Integer tid, String tname, Student student) {
+        this.tid = tid;
+        this.tname = tname;
+        this.student = student;
+    }
+
+    public Integer getTid() {
+        return tid;
+    }
+
+    public void setTid(Integer tid) {
+        this.tid = tid;
+    }
+
+    public String getTname() {
+        return tname;
+    }
+
+    public void setTname(String tname) {
+        this.tname = tname;
+    }
+
+    public Student getStudent() {
+        return student;
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
+    }
+
+    @Override
+    public String toString() {
+        return "Teacher{" +
+                "tid=" + tid +
+                ", tname='" + tname + '\'' +
+                ", student=" + student +
+                '}';
+    }
+}
+```
+
+添加配置如下：
+
+```xml
+<bean id="student" class="com.zxs.scope.Student">
+    <property name="sid" value="111"/>
+    <property name="sname" value="佳佳"/>
+</bean>
+
+
+<bean id="teacher" class="com.zxs.auto.Teacher" autowire="byName">
+    <property name="tid" value="111"/>
+    <property name="tname" value="tom"/>
+</bean>
+```
+
+可以看到的是，在teacher这个bean中，我们并没有给舒心student配置值，但是他依然能够有效果如下图：
+
+```java
+@Test
+public void myTest(){
+    ApplicationContext ac =new ClassPathXmlApplicationContext("applicationContext.xml");
+    Teacher teacher = ac.getBean("teacher", Teacher.class);
+    System.out.println(teacher);
+}
+```
+
+![image-20200824105653976](one\image-20200824105653976.png)
+
+这就是`byName`的自动装配，也就是说当我们为这个bean设置了自动装配时，spring容器给teacher这个bean的一个Student类型的名为student的属性自动去配置值，而这个值需要的bean就是同类型的id值与上面的名student相同的那一个。如果没有找到匹配的，就会报错。
+
+#### （2）byType
+
+顾名思义，就是指通过类型自动装配，所以这里就要注意了，因为我们在配置bean的时候，可能就会有多个同类型的bean,如果通过类型来配置这种类型的bean,就会报错，因此，这种方式使用的话，配置的值的bean在同类型下只能有一个。
+
+```xml
+<bean id="student11" class="com.zxs.scope.Student">
+    <property name="sid" value="111"/>
+    <property name="sname" value="佳佳"/>
+</bean>
+
+
+<bean id="teacher" class="com.zxs.auto.Teacher" autowire="byType">
+    <property name="tid" value="111"/>
+    <property name="tname" value="tom"/>
+</bean>
+```
+
+> 必须说明的是，在项目中，很少会使用配置文件来做自动装配的，因为太过于繁杂，因此，我们要通过注解的形式来做。
+
+## 六、基于注解的配置
+
+> 如果你前面都比较了解了，那你就可以从这里就开始看了
+
+### 1、基本注解配置
+
+spring中，一般性的注解大致有四个，也是最常见的四个注解：
+
+				* `@Component（value=default）`: 没有特殊含义，就是在spring容器中配置成一个bean,value值就是他的id值，如果没有指定，就是类名的首字母小写之后的id,如：类为Teacher,那么id就是teacher,如果指定了id就为指定后的值。
+				* @Repository（value=default）: 表示应该是运用在dao层，其他含义都相同。
+				* @Service（value=default）: 表示运用在service层，其他含义都相同。
+				* @Controller（value=default）: 表示运用在controller层，其他含义都相同。
+
+> **值得注意的是：这些注解都应该用在普通类上面，而不是接口或者抽象类上面。**
+
+下面新建一个项目用一个最简单的例子来说明吧：
 
