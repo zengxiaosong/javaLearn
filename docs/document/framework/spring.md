@@ -878,7 +878,7 @@ public void myTest(){
 
 spring中，一般性的注解大致有四个，也是最常见的四个注解：
 
-				* `@Component（value=default）`: 没有特殊含义，就是在spring容器中配置成一个bean,value值就是他的id值，如果没有指定，就是类名的首字母小写之后的id,如：类为Teacher,那么id就是teacher,如果指定了id就为指定后的值。
+				* @Component（value=default）: 没有特殊含义，就是在spring容器中配置成一个bean,value值就是他的id值，如果没有指定，就是类名的首字母小写之后的id,如：类为Teacher,那么id就是teacher,如果指定了id就为指定后的值。
 				* @Repository（value=default）: 表示应该是运用在dao层，其他含义都相同。
 				* @Service（value=default）: 表示运用在service层，其他含义都相同。
 				* @Controller（value=default）: 表示运用在controller层，其他含义都相同。
@@ -887,3 +887,235 @@ spring中，一般性的注解大致有四个，也是最常见的四个注解�
 
 下面新建一个项目用一个最简单的例子来说明吧：
 
+先看项目结构如下：
+
+![image-20200824142313456](one\image-20200824142313456.png)
+
+bean层:
+
+```java
+package com.zxs.bean;
+
+import org.springframework.stereotype.Component;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:12
+ *文件说明：
+ */
+@Component("student")
+public class Student {
+
+    public Student() {
+        System.out.println("component");
+    }
+}
+```
+
+Dao层:
+
+```java
+package com.zxs.dao;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:14
+ *文件说明：
+ */
+public interface StudentDao {
+}
+```
+
+```java
+package com.zxs.dao;
+
+
+import org.springframework.stereotype.Repository;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:14
+ *文件说明：
+ */
+@Repository
+public class StudentDaoImpl implements StudentDao{
+
+    public StudentDaoImpl() {
+        System.out.println("Repository");
+    }
+}
+```
+
+service层：
+
+```java
+package com.zxs.service;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:17
+ *文件说明：
+ */
+public interface StudentService {
+}
+```
+
+```java
+package com.zxs.service;
+
+import org.springframework.stereotype.Service;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:17
+ *文件说明：
+ */
+@Service
+public class StudentServiceImpl {
+    public StudentServiceImpl() {
+        System.out.println("service");
+    }
+}
+```
+
+controller层：
+
+```java
+package com.zxs.controller;
+
+import org.springframework.stereotype.Controller;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:18
+ *文件说明：
+ */
+@Controller
+public class StudentController {
+    public StudentController() {
+        System.out.println("controller");
+    }
+}
+```
+
+这些配置好了还不行，还需要在配置文件构建扫描组件的配置，
+
+```xml
+<!--扫描组件的配置-->
+<context:component-scan base-package="com.zxs">
+<!--base-package就是指这个配置具体包含到那一个包当中-->
+</context:component-scan>
+```
+
+测试下：
+
+```java
+@Test
+public void myTest(){
+    ApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+
+}
+```
+
+![image-20200824142945830](one\image-20200824142945830.png)
+
+### 2、注解有效范围配置
+
+| 类别       | 示例                      | 说明                                                         |
+| ---------- | ------------------------- | ------------------------------------------------------------ |
+| annotation | com.atguigu.XxxAnnotation | 过滤所有标注了 XxxAnnotation 的类。这个规则根 据目标组件是否标注了指定类型的注解进行过滤。 |
+| assignable | com.atguigu.BaseXxx       | 过滤所有 BaseXxx 类的子类。这个规则根据目标组 件是否是指定类型的子类的方式进行过滤。 |
+| aspectj    | com.atguigu.*Service+     | 所有类名是以 Service 结束的，或这样的类的子类。 这个规则根据 AspectJ 表达式进行过滤。 |
+| regex      | com\.atguigu\.anno\.*     | 所有 com.atguigu.anno 包下的类。这个规则根据正 则表达式匹配到的类名进行过滤。 |
+| custom     | com.atguigu.XxxTypeFilter | 使用 XxxTypeFilter 类通过编码的方式自定义过滤规则，该类必须实现org.springframework.core.type.filter.TypeFilter 接口 |
+
+包含形式：
+
+```xml
+<context:component-scan base-package="com.zxs" use-default-filters="false">
+    <context:include-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    <context:include-filter type="assignable" expression="com.zxs.controller.StudentController"/>
+</context:component-scan>
+```
+
+使用包含的过滤时，首先要将默认过滤定义为false,否则还是会通过全部进行扫描，type就是我们上面介绍的五种形式。
+
+排除形式：
+
+```xml
+<!--扫描组件的配置-->
+<context:component-scan base-package="com.zxs" use-default-filters="true">
+   <context:exclude-filter type="assignable" expression="com.zxs.controller"/>
+    <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+</context:component-scan>
+```
+
+表示哪些包或者类不能被扫描，使用的时候 要使`use-default-filters="true"`或者为默认值，值得注意的是，包含形式与排除形式是不能混用的，无论从语法来讲，或者逻辑来件，都是不通的。
+
+### 3、注解形式的自动装配
+
+其实就是给需要装配的属性加一个注解，举个例子吧：
+
+我们通过前面的dao层和service层演示下，给service层自动装配dao层的内容：
+
+dao层：
+
+```java
+package com.zxs.dao;
+
+
+import org.springframework.stereotype.Repository;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:14
+ *文件说明：
+ */
+@Repository("studentDao")
+public class StudentDaoImpl implements StudentDao{
+
+    public StudentDaoImpl() {
+        System.out.println("Repository");
+    }
+
+    @Override
+    public void userDao() {
+        System.out.println("创建成功");
+    }
+}
+```
+
+service层：
+
+```java
+package com.zxs.service;
+
+import com.zxs.dao.StudentDao;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:17
+ *文件说明：
+ */
+@Service
+public class StudentServiceImpl implements StudentService{
+
+    public StudentServiceImpl() {
+        System.out.println("service");
+    }
+
+    @Autowired
+    @Qualifier("studentDao")
+    StudentDao studentDao;
+
+    @Override
+    public void userDao() {
+        studentDao.userDao();
+    }
+}
+```
+
+这里就是我们通过@Autowired 实现按照类型来装配，因为这里是接口属性， @Qualifier("studentDao") 再加上这个注解，确定到名字，就对应着装配好了。当然，@Autowired(required = false) 也可以这样写，表示可以为空，不用去自动装配。其他还有注解@Resource,他是先通过名字取找，再通过类型，和上面是相反的。
