@@ -24,13 +24,167 @@
 
 结构图如下：
 
+![image-20200825092936494](img\image-20200825092936494.png)
 
+测试代码如下：分别分为懒汉式和饿汉式：
+
+饿汉式：（开始就直接构造好实例）
+
+```java
+package com.zxs.javaDesign;
+
+/*
+ *@author by java开发-曾
+ *2020/8/25 10:25
+ *文件说明：饿汉式
+ */
+public class Singleton {
+
+    //静态成员变量
+    private static final Singleton instance = new Singleton();
+    //构造函数私有，只能通过静态类来使用，不允许外部构建实例
+    private Singleton(){ }
+    //公共全局访问方法
+    public static Singleton getSingleton(){
+        return instance;
+    }
+
+    public void doPrint(){
+        System.out.println("实例已经被创建");
+    }
+}
+```
+
+测试：
+
+```java
+@Test
+public void myTest(){
+    Singleton singleton = Singleton.getSingleton();
+    singleton.doPrint();
+    System.out.println(singleton);
+
+    //再次获取
+    Singleton singleton1 = Singleton.getSingleton();
+    System.out.println(singleton1);
+
+}
+```
+
+懒汉式：（需要的时候再构造，不需要就不构造）
+
+```java
+package com.zxs.javaDesign;
+
+/*
+ *@author by java开发-曾
+ *2020/8/25 10:39
+ *文件说明：懒汉式
+ */
+public class Singleton2 {
+
+    //静态常量成员，不需要
+    private static Singleton2 instance = null;
+
+    private Singleton2(){}
+
+    public  static Singleton2 getSingleton(){
+        if(instance==null){
+            instance = new Singleton2();
+        }else{
+            System.out.println("该实例已经被构建");
+        }
+        return instance;
+    }
+
+}
+```
+
+测试：
+
+```java
+@Test
+public void myTest(){
+    Singleton2 singleton = Singleton2.getSingleton();
+    System.out.println(singleton);
+
+    Singleton2 singleton2 = Singleton2.getSingleton();
+    System.out.println(singleton2);
+}
+```
 
 ## 2、结构型模式
 
+###  （1）代理模式
 
+代理模式的概念：比如说厂家生产了一个产品，他需要卖出去，于是找了代理商帮他卖，代理商在卖产品的时候做了销售前的包装，销售后的回访等，同样，顾客也可以直接去找厂家买，这就是代理模式。
 
+特点：
 
+- 代理模式在客户端与目标对象之间起到一个中介作用和保护目标对象的作用；
+- 代理对象可以扩展目标对象的功能；
+- 代理模式能将客户端与目标对象分离，在一定程度上降低了系统的耦合度；
+
+缺点：
+
+- 在客户端和目标对象之间增加一个代理对象，会造成请求处理速度变慢；
+- 增加了系统的复杂度；
+
+实现原理: 既然是代理，那么他们之间的方法应该是差不多的，因此他们应该有继承的接口或者抽象类。共有三个角色：抽象主题，真实主题，代理类，同样，代理模式也要分为静态代理和动态代理：
+
+![](img\3-1Q115093011523.gif)
+
+静态代理：
+
+```java
+//抽象接口
+public interface Subject {
+    void request();
+}
+
+//真实的主题类
+public class RealSubject implements Subject {
+    @Override
+    public void request() {
+        System.out.println("生产了一个苹果");
+    }
+}
+
+//代理类
+public class Proxy implements Subject{
+
+    private RealSubject realSubject;
+
+    @Override
+    public void request() {
+        if (realSubject==null){
+            realSubject = new RealSubject();
+        }
+        preRequest();
+        realSubject.request();
+        posRequest();
+    }
+
+    private void preRequest() {
+        System.out.println("真实处理之前的处理事件");
+    }
+
+    private void posRequest(){
+        System.out.println("真实处理之后的处理事件");
+    }
+}
+
+//测试类
+public class myTest {
+    @Test
+    public void myTest(){
+        Proxy proxy = new Proxy();
+        proxy.request();
+    }
+}
+```
+
+动态代理：
 
 
 
