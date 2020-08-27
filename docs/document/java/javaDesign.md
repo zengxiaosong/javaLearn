@@ -186,7 +186,76 @@ public class myTest {
 
 动态代理：
 
+动态代理比较复杂，我基本在代码中给了解释：多理解：
 
+增加一个代理工具类 `ProxyUtil`:
+
+```java
+package com.zxs.proxy;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+/*
+ *@author by java开发-曾
+ *2020/8/27 15:12
+ *文件说明： 设置动态代理工具类
+ */
+public class ProxyUtil {
+
+    //获取动态代理需要的实际类
+    private Object instance;
+
+    public ProxyUtil() {
+    }
+
+    //设置获取的构造函数
+    public ProxyUtil(Object instance) {
+        this.instance = instance;
+    }
+
+    public Object getProxy(){
+        //获取类加载器
+        ClassLoader loader = this.getClass().getClassLoader();
+        //获取实际类所调用的所有接口
+        final Class [] interfaces = instance.getClass().getInterfaces();
+        //获取相应的代理类
+        return Proxy.newProxyInstance(loader, interfaces, new InvocationHandler() {
+            /*
+              代理类的执行方法，每个方法执行时应该做的事
+              这里很明显，由于代理类继承了前面的interfaces,所以指的方法就是指接口中的方法
+             */
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                //增加前置通知
+                System.out.println("这是前置通知");
+
+                //既然要代理，那么实际执行的应该是原理实际类中执行的方法
+                Object result = method.invoke(instance,args);
+
+                //增加后置通知
+                System.out.println("这是后置通知");
+                return result;
+            }
+        });
+    }
+
+}
+```
+
+测试类：
+
+```java
+ProxyUtil proxyUtil = new ProxyUtil(new RealSubject());
+Subject subject =(Subject) proxyUtil.getProxy();
+subject.request();
+```
+
+实现效果：
+
+![image-20200827153256629](img\image-20200827153256629.png)
 
 ## 3、行为型模式
 
