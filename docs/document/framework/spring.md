@@ -1120,5 +1120,317 @@ public class StudentServiceImpl implements StudentService{
 
 这里就是我们通过@Autowired 实现按照类型来装配，因为这里是接口属性， @Qualifier("studentDao") 再加上这个注解，确定到名字，就对应着装配好了。当然，@Autowired(required = false) 也可以这样写，表示可以为空，不用去自动装配。其他还有注解@Resource,他是先通过名字取找，再通过类型，和上面是相反的。
 
-## 七、Aop的相关操作
+## 七、AOP的相关操作
+
+> 在看AOP之前，建议先去看看我写在java设计模式中的代理模式，更加方便理解
+
+### 1、AOP相关的概念及术语
+
+> 这些基本概念后面再进行讲解
+
+### 2、基本操作
+
+所谓通知，就是指在要执行的方法前后加上我们想要的操作并且不会改变原来程序的结构
+
+#### （1）前置通知
+
+这里我们使用AspectJ以及注解的方式来使用，AOP仅仅只是一个概念，真实的操作还是要依靠AspectJ来实现的。
+
+我们先引入所需要的依赖环境：(当然，要加上前面所依赖的相关环境的)
+
+```xml
+<!--AspectJ 开始-->
+<dependency>
+  <groupId>org.springframework</groupId>
+  <artifactId>spring-aspects</artifactId>
+  <version>5.2.7.RELEASE</version>
+</dependency>
+
+<dependency>
+  <groupId>org.aspectj</groupId>
+  <artifactId>aspectjtools</artifactId>
+  <version>1.9.5</version>
+</dependency>
+
+<dependency>
+  <groupId>aopalliance</groupId>
+  <artifactId>aopalliance</artifactId>
+  <version>1.0</version>
+</dependency>
+
+<dependency>
+  <groupId>org.aspectj</groupId>
+  <artifactId>aspectjweaver</artifactId>
+  <version>1.9.0</version>
+</dependency>
+
+<dependency>
+  <groupId>cglib</groupId>
+  <artifactId>cglib</artifactId>
+  <version>3.3.0</version>
+</dependency>
+<!--AspectJ 结束-->
+```
+
+> 这里引入cglib的目的是如果该类没有接口，可以转换到父类中去。
+
+既然我们做注解装配，还要加上能够解析这些注解的配置，在我们的`ApplicationContext.xml`文件中添加切面的配置：
+
+```xml
+<!--切面的自动代理-->
+<aop:aspectj-autoproxy/>
+```
+
+现在在我们原先的基础上给我们的service服务层添加一个切面：
+
+```java
+package com.zxs.logger;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+/*
+ *@author by java开发-曾
+ *2020/9/2 11:25
+ *文件说明： 切面的配置
+ */
+@Component
+@Aspect
+public class MyLoggerAspect {
+
+
+    //前置通知
+    @Before("execution(public void com.zxs.service.StudentService.userDao(String))")
+    public void beforeMethod(JoinPoint joinPoint){
+        //获取通知方法中的方法名以及参数
+        String methodName = joinPoint.getSignature().getName();
+        Object[] args = joinPoint.getArgs();//获取方法中的参数
+        System.out.println("这是前置的通知: methodName:"+methodName+"   args:"+ Arrays.toString(args));
+    }
+}
+```
+
+测试下：
+
+```java
+@Test
+public void myTest(){
+    ApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+    StudentService studentServiceImpl = ac.getBean("studentServiceImpl", StudentService.class);
+    studentServiceImpl.userDao("java-develop");
+}
+```
+
+看下效果：
+
+![image-20200902181616420](one\image-20200902181616420.png)
+
+> 必须说明的是，即时是作为切面加了@Aspect注解，也要加入组件的注解，因为AOP是在IOC基础上的扩展，因此也是要交给Spring容器进行管理的。
+
+#### （2）切面表达式
+
+在上面切面的基础上，我们对切面表达式进行更改如下：
+
+```java
+//前置通知
+@Before("execution(public * com.zxs.service.StudentService.*(..))")
+public void beforeMethod(JoinPoint joinPoint){
+    //获取通知方法中的方法名以及参数
+    String methodName = joinPoint.getSignature().getName();
+    Object[] args = joinPoint.getArgs();//获取方法中的参数
+    System.out.println("这是前置的通知: methodName:"+methodName+"   args:"+ Arrays.toString(args));
+}
+```
+
+当然，也是具有效果的，对这种匹配，简单的说明下吧：
+
+![image-20200902190000258](one\image-20200902190000258.png)
+
+![image-20200902190035128](one\image-20200902190035128.png)
+
+####  （3）后置通知
+
+前面的前置通知是在方法执行之前进行通知的，而这里是在方法执行之后进行通知的，这里要考虑到异常的情况，也就是说，无论有没有异常，都要执行的，类似于`try...catch...`里面的finally中要执行的代码一样。
+
+```java
+/**
+* @Description:  @After:这是后置的通知，执行于方法之后，也就是finally中的那一部分。
+* @return: void
+* @Author: java-zeng
+* @Date: 2020/9/2
+*/
+@After(value = "execution(public * com.zxs.service.StudentService.add(..))")
+public void afterMethod(){
+    System.out.println("这是后置的通知");
+}
+```
+
+#### （4）返回通知
+
+```java
+/**
+* @Description: 知识返回通知，执行之后的返回值
+* @Param: [result]
+* @return: void
+* @Author: 曾小松
+* @Date: 2020/9/2
+*/
+@AfterReturning(value = "execution(public * com.zxs.service.StudentService.add(..))",returning = "result")
+public void afterReturningMethod(Object result){
+    System.out.println("方法执行的结果是："+result);
+}
+```
+
+#### （5）异常通知
+
+```java
+/**
+* @Description: 这是异常通知，表示异常信息时，要执行的方法
+* @Param: [ex]
+* @return: void
+* @Author: 曾小松
+* @Date: 2020/9/2
+*/
+@AfterThrowing(value = "execution(public * com.zxs.service.StudentService.add(..))",throwing = "ex")
+public void afterThrowing(Exception ex){
+    System.out.println("异常信息为："+ex);
+}
+```
+
+#### （6）环绕通知
+
+> 与我们前面所说的代理模式极为类似
+
+```java
+@Around(value = "execution(public * com.zxs.service.StudentService.add(..))")
+public Object aroundMethod(ProceedingJoinPoint joinPoint){
+    Object result;
+    try {
+        System.out.println("环绕中的前置");
+        result = joinPoint.proceed();
+        System.out.println("环绕中的返回:"+result);
+        return result;
+    } catch (Throwable throwable) {
+        throwable.printStackTrace();
+        System.out.println("环绕中的异常");
+    }finally {
+        System.out.println("环绕中的后置");
+    }
+    return null;
+}
+```
+
+#### （7）公共切入点
+
+也就是我们设置了一个切入点，其他的通知中可以重用这个切入点：
+
+```java
+//加上公共切入点
+@Pointcut("execution(public * com.zxs.service.StudentService.add(..))")
+public void test(){
+
+}
+
+//前置通知,这里重用了上面的公共切入点
+@Before("test()")
+public void beforeMethod(JoinPoint joinPoint){
+    //获取通知方法中的方法名以及参数
+    String methodName = joinPoint.getSignature().getName();
+    Object[] args = joinPoint.getArgs();//获取方法中的参数
+    System.out.println("这是前置的通知: methodName:"+methodName+"   args:"+ Arrays.toString(args));
+}
+```
+
+#### （8）切面优先级
+
+对于同一个要执行的方法，我们可以添加多个切面，那么这些切面执行的顺序是怎么样的呢？我们可以通过添加切面的优先级别来设置，具体就是通过添加注解`@Order(num)`，这里的num就是我们要设置的数字，默认是int基本类型的最大值，这里数字越小，级别越优先，当然，0和负数的优先级别是一致的。
+
+在该切面添加注解如下：
+
+```java
+@Component
+@Aspect
+@Order(5)
+public class MyLoggerAspect {
+```
+
+设置另一个切面：
+
+```java
+package com.zxs.logger;
+
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+/*
+ *@author by java开发-曾
+ *2020/9/2 20:07
+ *文件说明：
+ */
+@Component
+@Order(8)
+@Aspect
+public class LoggerTest {
+
+    @Before("execution(public * com.zxs.service.StudentService.add(..))")
+    public void before(){
+        System.out.println("这是测试优先级别的切面");
+    }
+}
+```
+
+#### （9）使用xml方式进行配置：
+
+先写一个切面的类如下：(这只是一个普通类，现在我们来配置形成aspect)
+
+```java
+package com.zxs.logger;
+
+/*
+ *@author by java开发-曾
+ *2020/9/2 20:11
+ *文件说明：使用纯xml的形式来配置切面
+ */
+public class LoggerXml {
+
+    //这是我们先设置的前置方法
+    public void beforeMethod(){
+        System.out.println("这是运用纯种xml的形式来配置xml");
+
+    }
+}
+```
+
+在applicationContext.xml中进行配置:
+
+```xml
+<!--用xml的形式来配置切面-->
+
+<!--将切面配置成bean-->
+<bean id="loggerXml" class="com.zxs.logger.LoggerXml"></bean>
+
+<aop:config>
+    <aop:aspect ref="loggerXml">
+        <aop:before method="beforeMethod" pointcut="execution(public * com.zxs.service.StudentService.add(..))"></aop:before>
+    </aop:aspect>
+</aop:config>
+```
+
+再对原方法进行测试，就可以了。
+
+## 八、spring中Jdbc的相关操作
+
+
+
+
+
+
+
+## 九、声明式事务
 
