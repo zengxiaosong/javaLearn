@@ -1512,10 +1512,7 @@ public class myTest {
 
 链接如下：
 
-[jdbc的相关操作]: jdbcTemplate.md
-[别人的博客链接]: https://blog.csdn.net/Huangyuhua068/article/details/82142044?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522159913665419724839810606%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&amp;request_id=159913665419724839810606&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_click~default-2-82142044.first_rank_ecpm_v3_pc_rank_v4&amp;utm_term=jdbctemplate&amp;spm=1018.2118.3001.4187
-
-
+[jdbc的相关操作]: https://zengxiaosong.gitee.io/javalearn/#/./document/framework/jdbcTemplate
 
 ## 九、声明式事务
 
