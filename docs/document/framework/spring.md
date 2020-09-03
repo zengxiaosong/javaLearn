@@ -1426,11 +1426,98 @@ public class LoggerXml {
 
 ## 八、spring中Jdbc的相关操作
 
+这里我们是使用的maven方式，引入依赖：
+
+```xml
+<!--druid连接池-->
+<dependency>
+  <groupId>com.alibaba</groupId>
+  <artifactId>druid</artifactId>
+  <version>1.1.6</version>
+</dependency>
+
+<!--mysql数据源-->
+<dependency>
+  <groupId>mysql</groupId>
+  <artifactId>mysql-connector-java</artifactId>
+  <version>5.1.32</version>
+</dependency>
+
+<!--jdbcTemplate-->
+<dependency>
+  <groupId>org.springframework</groupId>
+  <artifactId>spring-jdbc</artifactId>
+  <version>5.2.7.RELEASE</version>
+</dependency>
+```
+
+现在，我们使用前面提及的引用外部属性文件的方式配置数据源：
+
+```xml
+<!--数据源-->
+<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+    <property name="driverClassName" value="${jdbc.driver}"/>
+    <property name="url" value="${jdbc.url}"/>
+    <property name="username" value="${jdbc.username}"/>
+    <property name="password" value="${jdbc.password}"/>
+</bean>
+```
+
+再将数据源配置到我们的jdbctemplate中：
+
+```xml
+<!--配置jdbcTemplate-->
+<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    <property name="dataSource" ref="dataSource"/>
+</bean>
+```
+
+配置成功后，进行测试：
+
+```xml
+package com.zxs.test;
+
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+/*
+ *@author by java开发-曾
+ *2020/8/24 14:20
+ *文件说明：
+ */
+public class myTest {
+
+    ApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+    JdbcTemplate jdbcTemplate=ac.getBean("jdbcTemplate", JdbcTemplate.class);
 
 
+    /**
+    * @Description:  实现单个数据的增删改
+    * @Param: []
+    * @return: void
+    * @Author: 曾小松
+    * @Date: 2020/9/3
+    */
+    @Test
+    public void myTest() {
+        String sql = "insert into user values(null,?,?,?)";
+        jdbcTemplate.update(sql,"贾鑫",52,1);
+    }
+}
+```
 
+当然，这里不仅仅是只有一种操作，其他的操作我引用了别人写的案例，就没必要造轮子了，
+
+链接如下：
+
+[jdbc的相关操作]: jdbcTemplate.md
+[别人的博客链接]: https://blog.csdn.net/Huangyuhua068/article/details/82142044?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522159913665419724839810606%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&amp;request_id=159913665419724839810606&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_click~default-2-82142044.first_rank_ecpm_v3_pc_rank_v4&amp;utm_term=jdbctemplate&amp;spm=1018.2118.3001.4187
 
 
 
 ## 九、声明式事务
+
+### 1、事务的相关概念
 
