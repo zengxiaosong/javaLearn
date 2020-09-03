@@ -1510,9 +1510,11 @@ public class myTest {
 
 当然，这里不仅仅是只有一种操作，其他的操作我引用了别人写的案例，就没必要造轮子了，
 
-链接如下：
+链接如下：https://zengxiaosong.gitee.io/javalearn/#/./document/framework/jdbcTemplate
 
-[jdbc的相关操作]: https://zengxiaosong.gitee.io/javalearn/#/./document/framework/jdbcTemplate
+这是别人的博客：https://blog.csdn.net/Huangyuhua068/article/details/82142044?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522159913665419724839810606%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=159913665419724839810606&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_click~default-2-82142044.first_rank_ecpm_v3_pc_rank_v4&utm_term=jdbctemplate&spm=1018.2118.3001.4187
+
+> 必须注意的是，在生产环境下，最好是不要用字符串拼接的方式来实现，要按照上面的通配符形式使用，防止被sql注入。
 
 ## 九、声明式事务
 
