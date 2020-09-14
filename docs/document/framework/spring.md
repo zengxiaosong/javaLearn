@@ -1520,3 +1520,34 @@ public class myTest {
 
 ### 1、事务的相关概念
 
+事务的xml配置：https://blog.csdn.net/qingpengshan/article/details/80599012
+
+事务的注解配置：
+
+```java
+<!-- 配置事务管理器 --> 
+
+<bean id=*"transactionManager"* 
+
+class=*"org.springframework.jdbc.datasource.DataSourceTransactionManager"*> 
+
+<property name=*"dataSource"* ref=*"dataSource"*/> 
+
+</bean> 
+
+<!-- 启用事务注解 --> 
+
+<tx:annotation-driven transaction-manager=*"transactionManager"*/> 
+```
+
+然后在对应的方法上加上@Transactional注解即可，
+
+同时注意事务的四个特性：
+
+隔离性
+
+一致性
+
+原子性
+
+持久性
