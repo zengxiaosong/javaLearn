@@ -2,12 +2,17 @@
   * [Java基础](./document/java/guide.md)  
   * [java深入](./document/java/javaMore.md)
   * [java的设计模式](./document/java/javaDesign.md)
+* 数据结构与算法
+  * [数据结构](./document/dataStructure/dataStructure.md)
+  * [算法习题](./document/dataStructure/arithmetic.md)
 * 框架学习
   * [建立基本的网页](./document/idea/web.md)
   * [hibernate-xml](./document/framework/hibernate-xml.md)  
   * [springMVC](./document/framework/springMVC.md)
   * [spring](./document/framework/spring.md)
+  * [Mybatis](./document/framework/Mybatis.md)
 * 英语四六级学习
   * [英语四级单词](./document/english/etc4.md)
 * 面试题相关
   * [java相关面试题](./document/face/java/interview.md)
+

@@ -720,7 +720,7 @@ public void  liveTest(){
 ```properties
 # 配置数据库相关的信息
 application.mysql.driver=com.mysql.jdbc.Driver
-application.mysql.url=jdbc:mysql://localhost:3306/test
+application.mysql.url=jdbc:mysql://localhost:3306/test?serverTimezone=UTC
 application.mysql.username=root
 application.mysql.password=你自己的密码
 ```
