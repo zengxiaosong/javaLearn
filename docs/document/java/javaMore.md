@@ -260,7 +260,7 @@ LocalDateTime localDateTime1 = LocalDateTime.parse(dateTime, dateTimeFormatter1)
 System.out.println(localDateTime1);
 ```
 
-## 6、Math相关类的使用
+## 六、Math相关类的使用
 
 ### Math类和Random类
 
@@ -365,3 +365,436 @@ public BigDecimal divide(BigDecimal divisor, int roundingMode)
   例如：7.5->7；7.6->8；-7.5->-7
 - BigDecimal.ROUND_HALF_EVEN ：如果倒数第二位是奇数，按照BigDecimal.ROUND_HALF_UP处理，如果是偶数，按照BigDecimal.ROUND_HALF_DOWN来处理。
   例如：7.5->8；8.5->8；7.4->7；-7.5->-8
+
+## 七、自动装箱与拆箱
+
+> 主要以Integer类型的数据进行一个简单的说明
+
+```
+//基本数据类型的封装类和基本类型之间的转化
+
+//包装类转化为基本数据类型
+Integer i = new Integer(11);
+int value = i.intValue();
+
+//基本数据类型转化为包装数据类型
+//调用静态方法进行转换
+Integer integer = Integer.valueOf(111);
+
+//自动装箱, 实现原理是系统会根据122的类型将其转换为Integer对象，并将对象的引用赋值给j
+Integer j = 112;
+//注意的是，这里针对于-128-127的数字，采用的是享元模式，会在共享池中调用引用
+
+//自动拆箱,将包装类对象转换为int基本数据类型
+int m = j;
+```
+
+## 八、Collection集合概述
+
+![image-20200928210835362](img\image-20200928210835362.png)
+
+### 1、arrayList/Vector
+
+主要说明下List<>接口中有个排序的方法：（其他的部分，看源码就能明白了）
+
+```java
+arrayList.sort(new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+        return o1.compareTo(o2);
+    }
+});
+System.out.println(arrayList);
+```
+
+`vector`对比于`arrayList`来讲，是线程安全的，扩容是2倍，`arrayList`的扩容是1.5倍。其他的方面基本上差不多
+
+### 2、LinkList
+
+![image-20200928212711506](img\image-20200928212711506.png)
+
+在LinkList中，就是存储的双向链表
+
+![image-20200928213200448](img\image-20200928213200448.png)
+
+这里讲下，我们计算机中存储数据的两种方式：
+
+* 顺序存储：也就是我们前面讲到的数组的方式
+* 链式存储：也就是链表的方法，通过索引值去寻址
+
+> 最后要说明的是，链表和数组的存储都是按照顺序存储的，并且是可重复的。
+
+### 3、Set相关的知识
+
+**HashSet：**
+
+关于这个集合，我们要清楚的是，他的底层是以HashMap来实现的，并且是无序的，也就是说存储的顺序与遍历的顺序是不相同的，因此，我们只要弄清楚hashMap的构造原理，也就清楚了hashSet的构造原理。
+
+```java
+Set<String> set =new HashSet<>();
+//添加元素，注意的是，set是不可重复的，
+set.add("ddd");
+set.add("111");
+set.add("ddd");
+System.out.println(set);  //[111, ddd]
+
+//同时注意，查看源码我们发现，hashSet的底层是hashMap
+/*
+ public HashSet() {
+     map = new HashMap<>();
+  }
+ */
+
+//添加的原理实质上是对map上键的添加
+/*
+public boolean add(E e) {
+       return map.put(e, PRESENT)==null;
+   }
+ */
+```
+
+> 值得注意的是，我们在使用自定义对象的时候对于如：add()/contains()/remove()等方法时需要对自定义类重写equals()/hashCode()方法来实现。因为底层的hashMap使用了这样的原理。
+
+### 4、TreeSet相关
+
+
+
+
+
+## 九、Map的相关
+
+![image-20200929143443982](img\image-20200929143443982.png)
+
+![image-20200929144254969](img\image-20200929144254969.png)
+
+### 1、HashMap的工作原理
+
+![image-20200930100046639](E:\myStudy\docisfy\javaLearn\docs\document\java\img\image-20200930100046639.png)
+
+>HashMap的底层是Hash表，Hash表就是一个数组，数组的元素就是一个链表
+>
+>HashMap.put("key",value)的实现原理：首先经过键的hash码，通过hash函数来计算hash值，（因此一定要重写hash函数）然后通过hash值来计算hash表的数组下标 i , 通过访问table[i]来判断是否为null,如果为null就将创建节点保存到元素中，如果不为null,就要判断该元素中的键与put中的键是否eauals()相等，如果相等就改变值，如果不相等，就创建一个新的节点插入到链表的末尾。
+
+### 2、hash的几种面试题
+
+* HashMap是如何解决hash冲突的？
+  * 采用链表法，所谓hash冲突（hash碰撞）指的是不同的不同的键都想存储在数组的同一个位置上。
+* 在JDK8中对hashMap做了哪些改进？
+  * 新增节点插入到链表的尾部
+  * 当单向链表中的节点数超过8个时，系统就会把单向链表转为红黑数。
+* hash函数的作用是什么？
+  * hash码可能会在一段区域中均匀出现，通过计算就可能会让数据在hash表中某个区域内大量出现，因此要对数据存储进行均匀分布。
+
+![image-20200930103236878](img\image-20200930103236878.png)
+
+> 注意多使用 ctrl + alt +t 快捷键组合
+
+## 十、其他几种关键
+
+### 1、泛型
+
+泛型就是将数据类型作为参数进行传递，如进行Comparable/Comparator接口时，通过泛型指定数据类型。使用集合的时候也可以。
+
+泛型的好处：
+
+* 可以编译时进行数据类型的检查
+
+自定义泛型:
+
+* 泛型方法
+* 泛型接口
+* 泛型类
+
+```java
+//定义一个泛型方法
+public static <T> T getThis(){
+    return null;
+}
+```
+
+>说明的是：这里的<T>仅仅是表名我们可以使用泛型，并将此方法定义为泛型，并不影响该方法的其他成分，仍然需要返回值，参数之类的。
+
+### 2、Collections
+
+> 前面我们了解到有Arrays的工具类，现在我们来看看Collections工具类。注意区别（Collection接口），这个工具类中有很多对list或者是map的操作，比如说排序，或者说将非线程安全list/map转换为线程安全的。
+
+### 3、Lambda表达式
+
+> lambda表达式主要是将语句中系统能够推断出来的部分进行省略，比如在方法参数中我们需要的匿名类以及需要重写的方法。
+
+lambda使用规则：
+
+(参数列表) -> { lambda体 }
+
+说明：   
+
+* 如果参数列表中只有一个参数，小括弧可以省略。
+* 参数列表中的参数类型可以省略。
+* lambda体重只有一条语句时，大括弧可以省略，如果只有这一条lambda语句是return语句。则return可以省略。
+
+## 十一、关于异常的方面
+
+> 异常有很多，如空指针异常等，当然，异常又分为编译时异常和运行时异常。以及错误，在面试题中已经说明了这个架构。Error是程序员不能处理的，但是异常是能够处理的（Exception)
+
+对于运行时异常，在编写代码的时候可能是发现不了的，因此，只有更好的理清结构。
+
+对于受检异常，通常使用：
+
+* throws抛出异常
+* try......catch...捕获异常（对于捕获异常的顺序要注意，如果有继承，要单独处理，就要先捕获子异常）
+
+在开发中如何选择抛出处理还是捕获处理？
+
+一般情况下，如果被调用的方法有受检异常需要预处理，选择捕获，因为抛出可能会导致运行的程序出现异常而死机。
+
+**自定义异常：**
+
+对于受检异常，要在方法中使用throws声明。
+
+## 十二、反射
+
+>首先要清楚什么是反射，其实就是通过权限定名获取一个Class对象，用来存储该类的字节码文件，然后通过这个类对象来实例化对象，设置属性等常规操作。
+
+### 1、获取class对象
+
+```java
+ //获取字节码文件
+Class class1 = String.class;
+Class class2 = "111".getClass();
+Class class3 = Class.forName("java.lang.String");
+System.out.println(class2 == class3);  //true
+
+Class class4 = int.class;
+Class class5 = Integer.class;
+Class class6 = Integer.TYPE;
+System.out.println(class4 == class5);  //false
+ System.out.println(class4 == class6);  //true
+```
+
+### 2、获取修饰符，父类，接口
+
+```java
+//获取修饰符
+System.out.println(class1.getModifiers());  //这里获得的是int
+//在java.lang.reflect 中有静态方法将int转换为字符串
+System.out.println(Modifier.toString(class1.getModifiers()));
+//返回类名
+System.out.println(class1.getName()); //返回完整类名
+System.out.println(class1.getSimpleName()); //获取简单类名
+//返回类的父类
+Class superclass = class1.getSuperclass();
+System.out.println(superclass.getSimpleName());
+//返回接口信息
+Class[] interfaces = class1.getInterfaces();//接口是多继承
+for (Class anInterface : interfaces) {
+    System.out.println(anInterface.getSimpleName());
+}
+```
+
+### 3、获取属性字段
+
+```java
+//返回其他相关的信息 如方法名
+Method[] methods = class1.getMethods();
+for (Method method : methods) {
+    System.out.println(method.getName());
+}
+//获取属性名,这种方式获取出来的是公有属性(public)
+Field[] fields = class1.getFields();
+for (Field field : fields) {
+    System.out.println(field.getName());
+}
+//通过这种方式获取的，即使是私有也能进行获取
+Field[] declaredFields = class1.getDeclaredFields();
+```
+
+### 4、创建类
+
+这里我们先在测试文件中定义一个类：
+
+```java
+class Test{
+    //私有
+    private Integer id;
+    //公有
+    public String name;
+    //默认的访问权限，只能在同类中以及同包名中进行访问
+    static String info="888";
+
+     public Test() {
+    }
+
+     public void doSomething(String str){
+        System.out.println("方法正在被执行"+str);
+    }
+    
+    public Test(Integer id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public static String getInfo() {
+        return info;
+    }
+
+    public static void setInfo(String info) {
+        Test.info = info;
+    }
+}
+```
+
+```java
+/*
+ 创建类有两种方式：
+    1、通过无参构造函数进行创建(默认无参构造)
+    2、通过有参构造进行构造
+ */
+Class class1 = Class.forName("Test");
+//使用这种方法，返回的是object对象
+//Object newInstance = class1.newInstance();
+//强制转换过来
+Test test = (Test) class1.newInstance();
+System.out.println(test.info);
+
+//使用泛型的方式确切的转换过来
+Class<Test> testClass = Test.class;
+Test test1 = testClass.newInstance();
+System.out.println(test1.info);
+
+//通过带有参数的构造函数进行创建
+Class class3 = Test.class;
+Constructor constructor = class3.getConstructor(Integer.class, String.class);
+if (constructor!=null){
+    Object object = constructor.newInstance(20,"555");
+    System.out.println("有参构造后"+object);
+}
+```
+
+### 5、对属性以及方法的相关操作
+
+```java
+Class class1 = Class.forName("Test");
+//使用这种方法，返回的是object对象
+Object newInstance = class1.newInstance();
+
+//通过获取的class对象设置相关属性，并执行相关的方法
+Field id = class1.getDeclaredField("id");
+//由于私有，并不能进行设置,修改访问权限
+id.setAccessible(true);
+id.set(newInstance,25);
+System.out.println(newInstance);
+
+//获取方法并进行执行
+Method doSomething = class1.getMethod("doSomething",String.class);
+//执行的对象以及执行参数
+doSomething.invoke(newInstance,"hello");
+```
+
+### 6、静态属性与方法
+
+```java
+ */
+Class class1 = Class.forName("Test");
+//使用这种方法，返回的是object对象
+Test newInstance = (Test) class1.newInstance();
+
+//通过获取的class对象设置相关属性，并执行相关的方法
+Field inf = class1.getDeclaredField("info");
+//对静态字段进行设置，默认使用null作为对象
+inf.set(null,"6666");
+System.out.println(newInstance.info);
+```
+
+## 十三、注解
+
+> 关于注解，有元注解，以及自定义注解，这里我们需要了解是如何通过反射的机制获取注解的相关信息的。
+
+先自定义一个注解：
+
+```java
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/*
+ *@author by java开发-曾
+ *2020/10/8 20:00
+ *文件说明：
+ */
+@Target({ElementType.TYPE,ElementType.METHOD})  //定义注解使用的权限，限定使用的地方
+@Retention(RetentionPolicy.RUNTIME)   //定义使用的期限，是到编译的时候，或是到运行时依然有效
+public @interface MyAnnotaion {
+
+    //设置相关的属性
+    String myName() default "java_zeng";
+}
+```
+
+将注解注入到新建的类上：
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/10/8 20:05
+ *文件说明：
+ */
+@MyAnnotaion
+public class MyClass {
+
+    @MyAnnotaion(myName = "444555")
+    public void doSomething(){
+        System.out.println("方法被执行");
+    }
+}
+```
+
+进行测试：
+
+```java
+import java.lang.reflect.*;
+
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest {
+    public static void main(String[] args) throws NoSuchMethodException {
+
+        //获取被加载的类
+        Class<MyClass> class1 = MyClass.class;
+
+        //获取类上被加载的注解
+        MyAnnotaion annotation = class1.getAnnotation(MyAnnotaion.class);
+        if (annotation!=null){
+            System.out.println(annotation.myName());
+        }
+
+        //获取方法上被加载的注解
+        Method doSomething = class1.getMethod("doSomething");
+        MyAnnotaion annotation1 = doSomething.getAnnotation(MyAnnotaion.class);
+        if (annotation1!=null){
+            System.out.println(annotation1.myName());
+        }
+    }
+}
+```
+
+## 十四、多线程机制
+
