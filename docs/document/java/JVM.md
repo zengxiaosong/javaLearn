@@ -90,9 +90,220 @@ java结尾的源文件，生成字节码文件（.class），然后在不同的J
 * J9: 这个是IBM公司开发的，一般来说主要是公司内部产品的底层工具，性能较好，未开源。
 * 以及其他的一些。
 
-### 二、类加载子系统（class loader subSystem）
+### 2、类加载子系统（class loader subSystem）
 
 ![image-20200930091742907](img\image-20200930091742907.png)
 
 ![image-20200930092318302](img\image-20200930092318302.png)
+
+加载的过程：
+
+![image-20201009091651571](img\image-20201009091651571.png)
+
+#### 1、加载阶段
+
+* 通过一个类的权限定名获取此类的二进制字节流
+* 将这个二进制字节流所代表的静态存储结构转化为方法区的运行时数据结构
+* 在内存中生成一个代表这个类的java.lang.Class对象，作为方法区这个类的各种数据的访问入口
+
+![image-20201009092936825](img\image-20201009092936825.png)
+
+#### 2、链接阶段
+
+> 链接包含 验证（Verify），准备(Prepare)，解析(Resolve)
+
+![image-20201009094739118](img\image-20201009094739118.png)
+
+> 1、所谓验证，就是要在二进制流加载的过程中检验其字节码文件的合法性，class文件，也就是JVM所识别的文件，都会有一个 CA FE BA BE 的关键字节码。2、准备中的赋予初值要注意，如有：static int i = 1;是先赋值为0，在初始化阶段再赋值为1的。
+
+#### 3、初始化阶段
+
+![image-20201009095621706](img\image-20201009095621706.png)
+
+对于执行<clinit>()方法的过程，我们用个例子来说明：
+
+```java
+public class MyTest {
+
+    public static int num = 1;
+    static {
+        num = 5;
+        number = 20;
+        //System.out.println(number);   //非法向前引用
+    }
+
+    public static int number = 10;
+
+
+    public static void main(String[] args) {
+        System.out.println(MyTest.num);   //5
+        System.out.println(MyTest.number);  //10
+    }
+}
+```
+
+> 在链接的准备阶段，对num=0;   number=0进行赋初值，然后到初始化阶段，执行<clinit>()进行赋值操作，num先赋值为1，然后赋值为5，number先赋值为20，然后赋值为10，注意的是，虽然可以进行赋值的左操作，但是不能进行右操作。同时，如果该类中没有静态变量，就不会执行<clinit>()函数。
+
+关于多线程，指的是加载类的操作仅仅只会执行一遍，而不会执行多次。下面举个例子：
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest implements Runnable{
+
+    public static void main(String[] args) {
+       Runnable r = new Runnable() {
+           @Override
+           public void run() {
+               System.out.println(Thread.currentThread().getName()+"开始");
+               //类在线程中被加载
+               Run run = new Run();
+               System.out.println(Thread.currentThread().getName()+"结束");
+           }
+       };
+
+       Thread th1 = new Thread(r,"线程1");
+        Thread th2 = new Thread(r,"线程2");
+
+        th1.start();
+        th2.start();
+
+    }
+
+    @Override
+    public void run() {
+        System.out.println(Thread.currentThread().getName()+"开始");
+        //类在线程中被加载
+        Run run = new Run();
+        System.out.println(Thread.currentThread().getName()+"结束");
+    }
+}
+
+class Run{
+
+    static {
+        if(true){
+            System.out.println("该类被加载"+Thread.currentThread().getName());
+            while (true){
+
+            }
+        }
+
+    }
+}
+
+//运行结果
+线程1开始
+线程2开始
+该类被加载线程1
+```
+
+#### 4、关于加载器的简介
+
+> 类在被加载的过程，我们对加载器进行分类，分为两种 ：bootStrapClassloader(引导类加载器) 和 自定义加载器，
+>
+> 对于引导类加载器，他是使用c++/c语言编写的，对于自定义加载器，是直接或者间接的继承了Classloader,是在java中可以具体实现的。对于这几类加载器，是没有具体的继承等关系的，但是有上下级的关系。具体在下面的代码中可以看出：
+
+```java
+//获取系统类加载器
+ClassLoader appClassloader = ClassLoader.getSystemClassLoader();
+System.out.println(appClassloader);  //  sun.misc.Launcher$AppClassLoader@18b4aac2
+
+//获取上层的扩展类加载器
+ClassLoader exClassLoader = appClassloader.getParent();
+System.out.println(exClassLoader);  //  sun.misc.Launcher$ExtClassLoader@1b6d3586
+
+//获取上层的引导类加载器
+ClassLoader bootClassloader = exClassLoader.getParent();
+System.out.println(bootClassloader); //null: 因为引导类加载器是用c++/c 进行编写的
+                                     //已经超出了java的范畴，是获取不到该对象的。
+
+//看下我们具体使用的类是用哪些加载器来加载的
+
+//我们的自定义类：MyTest  可以看出是用的系统类加载器
+ClassLoader classLoader = MyTest.class.getClassLoader();
+System.out.println(classLoader);   //sun.misc.Launcher$AppClassLoader@18b4aac2
+
+//在看看我们的String  使用的是引导类   值得注意的是，我们java中的核心类库都是由引导类加载器进行加载的
+ClassLoader classLoader1 = String.class.getClassLoader();
+System.out.println(classLoader1);  //null
+```
+
+具体的介绍：
+
+![image-20201009144559325](img\image-20201009144559325.png)
+
+![image-20201009145113009](img\image-20201009145113009.png)
+
+![image-20201009145543640](img\image-20201009145543640.png)
+
+获取加载器加载的路径：
+
+```java
+//获取引导类加载器的类文件的目录
+  URL[] urLs = Launcher.getBootstrapClassPath().getURLs();
+  for (URL urL : urLs) {
+      System.out.println(urL);
+  }
+
+  //同样，我们也可以来查看扩展类加载器加载的目录结构是什么
+  String property = System.getProperty("java.ext.dirs");
+  for (String url: property.split(";")) {
+      System.out.println(url);
+  }
+```
+
+![image-20201009151508212](img\image-20201009151508212.png)
+
+![image-20201009152029560](img\image-20201009152029560.png)
+
+#### 5、双亲委派机制
+
+> java虚拟机对class文件采用的是按需加载的方式，也就是说当需要使用该类时才会将它的class文件加载到内存生成的class对象中，而且加载某个类的class文件时，java虚拟机采用的是双亲委派模式，即把请求交由父类处理，他是一种任务委派模式。
+
+![image-20201009154453028](img\image-20201009154453028.png)
+
+优势：
+
+* 避免类被重复加载
+* 起保护作用，比如自定义类的包名为java.lang ,但是引导类加载器具有权限，因此是不能被加载的。
+
+#### 6、沙箱安全机制
+
+一、概念
+
+保证对java核心源代码的保护，就是沙箱安全机制。
+就是一种保护机制，保护源代码，保护JVM不受恶意代码的破坏。
+
+二、示例
+
+自定义的String类（java.lang.String），但是加载自定义类的时候回率先使用引导类加载器加载，而引导类加载器在加载的时候先加载jdk自带的文件(rt.jar包中的java\lang\String.class)，不会加载自定义的String类，这样就保护了java的源码，不会受到污染。
+
+#### 7、其他
+
+1）在JVM中表示两个class对象是否为同一个类存在的必要条件：
+
+* 类的完整类名必须一致，包括类名
+* 加载这个类的Classloader(指ClassLoader实例对象)必须相同
+
+> 换句话说，在JVM中，即时这两个类对象(class对象)来源于同一个class文件，被同一个虚拟机加载，但是加载器不同，两个类对象也是不相等的。
+
+![image-20201009201637316](img\image-20201009201637316.png)
+
+类的主动使用与被动使用
+
+![image-20201009202132269](img\image-20201009202132269.png)
+
+### 3、运行时数据区概述及线程
+
+#### 1、简介
+
+![image-20201009203817985](img\image-20201009203817985.png)
+
+![image-20201009204406992](img\image-20201009204406992.png)
+
+#### 2、程序计数器
 

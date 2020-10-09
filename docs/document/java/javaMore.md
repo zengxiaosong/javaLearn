@@ -469,7 +469,7 @@ public boolean add(E e) {
 
 ### 1、HashMap的工作原理
 
-![image-20200930100046639](E:\myStudy\docisfy\javaLearn\docs\document\java\img\image-20200930100046639.png)
+![image-20200930100046639](img\image-20200930100046639.png)
 
 >HashMap的底层是Hash表，Hash表就是一个数组，数组的元素就是一个链表
 >
