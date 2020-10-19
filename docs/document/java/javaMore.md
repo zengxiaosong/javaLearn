@@ -798,3 +798,759 @@ public class MyTest {
 
 ## 十四、多线程机制
 
+### 1、进程与线程
+
+> 所谓进程就是指计算机中运行的一个程序。。（打开任务管理器 ctrl+alt+del） 同时，进程之间的资源是不共享的，都是单独的。而线程是一个进程里面的一个执行单元或者是执行路径，共享数据。一个进程中包含多个线程就是多线程应用程序。线程与线程之间是独立的。
+
+**主线程与子线程：**
+
+* JVM会启动主线程（main线程）运行main方法。
+* 在A线程中启动了B线程，称A线程为B的父线程，B线程为A的子线程。
+
+**守护线程：**
+
+* 守护线程是为其他线程提供服务的线程，如垃圾回收器就是守护线程
+* 守护线程不能独立运行，当JVM中只有守护线程时，JVM会自动退出
+
+串行（serial）：各个任务逐个执行
+
+![image-20201010131359456](img\image-20201010131359456.png)
+
+并发：在执行任务A期间又执行了任务B
+
+![image-20201010131509758](img\image-20201010131509758.png)
+
+并行（paraller）:几个任务在同时执行，理想状态下的并发
+
+![image-20201010131842781](img\image-20201010131842781.png)
+
+### 2、创建线程
+
+**通过继承Thread实现run():**
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest {
+
+    public static void main(String[] args) {
+        //创建线程对象，
+        SubThread subThread = new SubThread();
+        //开启线程
+        subThread.start();
+        //注意，通过start()方法通知操作系统的线程调度器，当前线程准备好了，
+        //如果选中该线程，就执行该线程的run()方法
+        //如果在主线程中直接调用run()方法，不会开启新的线程，就是一个普通的实例方法
+    }
+    
+}
+
+//定义线程类
+class SubThread extends Thread{
+
+    //方法体，就是子线程中要执行的代码
+    @Override
+    public void run() {
+        System.out.println("haha");
+    }
+}
+```
+
+通过实现Runnable接口方式：
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest {
+
+    public static void main(String[] args) {
+        //将实现了runnable接口的类定义进来
+        Thread thread = new Thread(new Prime());
+        thread.start();
+        System.out.println("主线程");
+    }
+}
+
+//定义线程类
+class Prime implements Runnable {
+
+    public void run() {
+        System.out.println("子线程");
+    }
+}
+```
+
+创建线程的其他写法：
+
+```java
+public static void main(String[] args) {
+   Thread t = new Thread(){
+       @Override
+       public void run() {
+           super.run();
+           System.out.println("匿名类实现子线程");
+       }
+   };
+   t.start();
+   new Thread(new Runnable() {
+       public void run() {
+           System.out.println("匿名类子线程");
+       }
+   }).start();
+}
+```
+
+### 3、线程中的常用方法
+
+```java
+//返回正在活动的线程数
+public static int activeCount() {
+    return currentThread().getThreadGroup().activeCount();
+}
+```
+
+```java
+//获取当前线程
+public static native Thread currentThread();
+```
+
+```java
+//获取线程的类加载器
+System.out.println(t.getContextClassLoader());
+```
+
+```java
+/**
+ * Returns this thread's priority. //优先级
+ *
+ * @return  this thread's priority.
+ * @see     #setPriority
+ */
+public final int getPriority() {
+    return priority;
+}
+//每个线程都有一个优先级，值为1-10，默认为5
+//优先级越高，获得cpu的执行权的几率越大
+//程序如果有多个线程，线程要先获得cpu的执行权，单核cpu中，执行多线程采用时间片轮转
+```
+
+> interrupt(): 中断线程       static  interrupted(): 返回线程的中断标志    isAlive() :判断线程是否处于活动    isDaemon():判断是否为守护线程。  boolean isinterrupted(): 返回线程的中断标志    join():线程加入     sleep(): 线程睡眠   vield():  线程让步           
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest {
+
+    public static void main(String[] args) {
+        System.out.println("主线程"+Thread.currentThread().getName());
+        SubThread subThread = new SubThread();
+        subThread.start();
+    }
+
+}
+
+class SubThread extends Thread{
+
+    public SubThread(){
+        
+        System.out.println("构造函数中，当前线程"+Thread.currentThread().getName());  //构造函数中，当前线程main  
+        //注意的是，此时还处于main线程中，
+        
+        System.out.println("构造函数中"+this.getName());  //构造函数中Thread-0
+        //已经构造了，因此，此时处于子线程中
+    }
+
+    @Override
+    public void run() {
+        System.out.println("子线程");
+    }
+}
+```
+
+interrupt(): 中断线程，仅仅是给线程打一个中断标志，并不代表线程就会结束。
+
+ static  interrupted()：判断中断标志，并会清除中断标志
+
+boolean isinterrupted(): 实例方法，不会清除中断标志
+
+要想结束线程：
+
+* 调用stop()方法，已经弃用
+* 子线程的run()方法结束后，就会结束。
+* 在父进程中添加中断标志，在子进程中通过实时判断中断标志来结束线程。
+
+yield() 放弃cpu的执行权，重新争抢CPU的执行权，重新等线程调度器来调度。
+
+join()线程加入，在当前线程中加入线程，要等加入的线程执行完后才能继续执行
+
+join(1000):表示如果指定时间没结束就不会再继续等待。
+
+sleep():对于线程睡眠，可以使用interrupt()造成异常进行唤醒。注意的是，如果后面该线程任然有sleep() 是不能唤醒的了。
+
+### 4、线程的生命周期
+
+> getState():返回线程的状态，枚举类型，
+
+![image-20201010150948003](img\image-20201010150948003.png)
+
+### 5、多线程的优势和风险
+
+![image-20201010152131445](img\image-20201010152131445.png)
+
+### 6、线程安全问题
+
+![image-20201010191627759](img\image-20201010191627759.png)
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest {
+
+    public static void main(String[] args) {
+
+        SubThread subThread = new SubThread();
+        subThread.start();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        subThread.i++;
+    }
+}
+class SubThread extends Thread{
+
+    public int i = 2;
+
+    @Override
+    public void run() {
+        System.out.println(this.getName()+"one:"+i);
+        while (i==2){
+            //当读取时间过快，并且没有执行其他操作时，会出现线程的可见性问题，也就是说工作内存中的数据没有刷新进行读取
+//            try {
+//                sleep(500);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }   //加了一段代码后，就不会出现可见性的问题
+        }
+        System.out.println(i);
+    }
+}
+```
+
+![image-20201010205455081](img\image-20201010205455081.png)
+
+### 7、线程同步
+
+> 线程同步就是用于协调多个线程访问共享数据的机制，用于保证线程的安全性。线程同步机制包括：锁，volatile, wait()/notify()...
+
+7.1：锁的相关
+
+多线程可能会照成线程的安全问题，多个线程串行操作就不会引起安全问题，锁就是把多个线程对数据的并发操作转变成串行操作。
+
+想要访问共享数据，就必须先获得锁对象（就像是许可证），锁具有排他性，当线程访问完共享数据后，会自动释放锁对象。
+
+![image-20201010211739204](img\image-20201010211739204.png)
+
+> java中的锁分为：synchronized内部锁和Lock显示锁，java中的每一个对象都有一个关联的内部锁，即每个对象都可以作为synchronized锁对象。
+
+7.1.2：synchronized同步代码块
+
+语法：synchronized(锁对象|句柄){          访问共享数据的代码，即同步代码       }
+
+测试例子：
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest {
+    public static int m = 0;
+    public static Object object = new Object();
+
+    public static void main(String[] args) {
+        Thread t1= new Thread(){
+            @Override
+            public void run() {
+                for (int i = 0; i < 10000; i++) {
+
+                    //使用ctrl+alt+t
+
+                    synchronized (object) {
+                        m++;
+                    }
+                }
+            }
+        };
+        t1.start();
+        Thread t2= new Thread(){
+            @Override
+            public void run() {
+                for (int i = 0; i < 10000; i++) {
+
+                    synchronized (object) {
+                        m++;
+                    }
+                }
+            }
+        };
+        t2.start();
+        try {
+            t1.join();
+            t2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(m);  //不加同步锁的情况下 m的值可能是14428 | 20000，就出现了脏读的问题
+
+    }
+}
+```
+
+注意的是,对于同步代码块:
+
+* 可以定义一个常量作为锁对象
+* 只要是同一个锁对象，同步代码块可以在不同的方法体中也能进行同步。
+* 同步实例方法使用的是this对象的锁
+* 同步静态方法，使用的是类对象的锁，也可以说是字节码文件
+
+### 8、脏读
+
+> 产生的主要原因是设置数据和读取数据的两个线程没有进行同步操作，产生了中间值，造成了读取的数据不一致，解决办法就是将两个操作行成同步机制，来避免脏读
+
+### 9、死锁
+
+当多个线程需要使用多个同步锁时，如果获得锁的顺序不一致，可能会导致相互等待的情况，这种现象称为死锁。（注意的是，也不一定会造成死锁）
+
+如何解决死锁的问题：
+
+如果需要获得多个锁对象时，保证获得的锁对象的顺序是一致的。
+
+举例代码：
+
+```java
+/*
+ *@author by java开发-曾
+ *2020/9/26 16:11
+ *文件说明：
+ */
+public class MyTest {
+    public static void main(String[] args) {
+       SubThread s1 = new SubThread();
+       s1.setName("a");
+       s1.start();
+       SubThread s2 = new SubThread();
+       s2.setName("b");
+       s2.start();
+
+    }
+
+}
+class SubThread extends Thread{
+    @Override
+    public void run() {
+        if("a".equals(Thread.currentThread().getName())){
+            synchronized ("对象锁1"){
+                System.out.println(Thread.currentThread().getName()+"：获得了对象锁1");
+                synchronized ("对象锁2"){
+                    System.out.println(Thread.currentThread().getName()+"：获得了对象锁1和2");
+                }
+            }
+        }
+        if("b".equals(Thread.currentThread().getName())){
+            synchronized ("对象锁2"){
+                System.out.println(Thread.currentThread().getName()+"：获得了对象锁2");
+                synchronized ("对象锁1"){
+                    System.out.println(Thread.currentThread().getName()+"：获得了对象锁1和2");
+                }
+            }
+        }
+    }
+}
+```
+
+### 10、定时器类
+
+> Timer类作为定时器，可以在定时去完成某些操作，这个也是属于多线程上面的东西。具体的应用了解下就行，具体的应用到后面再去做。
+
+### 11、关于其他线程同步的
+
+wait()//这个线程的调用对象为锁对象，使得当前线程处于等待，会释放锁，下次执行时，继续执行未执行完的方法中的代码。notify()//这个作为唤醒线程，在多个线程中，只能唤醒一个，并不能唤醒多个,并且我们并不知道唤醒的是哪一个线程，如果要唤醒全部的线程，那么就要使用notifyAll();
+
+> 注意的是，wait()会释放锁和cpu执行权，让线程进入等待，通过notify(),notifyAll()后进入就绪区，而sleep()不会释放锁对象，并会造成访问同一个锁对象的线程阻塞。
+
+valitile修饰的变量不允许线程内缓存以及重排序，它会直接修改主内存，每次使用前立即从主内存刷新，这样保证读到的都是最新的。但是只能保证变量的可见性，不能保证原子性（非原子操作不能保证线程安全），即存在线程安全问题
+
+volatile 其本身包含“禁止指令重排序”的语义
+
+synchronized 是由“一个变量在同一个时刻只允许一条线程对其进行 lock 操作”这条规则获得的，此规则决定了持有同一个对象锁的两个同步块只能串行执行；
+
+Java语言提供了一种稍弱的同步机制，即volatile变量，用来确保将变量的更新操作通知到其他线程。当把变量声明为volatile类型后，编译器与运行时都会注意到这个变量是共享的，因此不会将该变量上的操作与其他内存操作一起重排序。volatile变量不会被缓存在寄存器或者对其他处理器不可见的地方，因此在读取volatile类型的变量时总会返回最新写入的值。
+
+在访问volatile变量时不会执行加锁操作，因此也就不会使执行线程阻塞，因此volatile变量是一种比sychronized关键字更轻量级的同步机制。
+
+当对非 volatile 变量进行读写的时候，每个线程先从内存拷贝变量到CPU缓存中。如果计算机有多个CPU，每个线程可能在不同的CPU上被处理，这意味着每个线程可以拷贝到不同的 CPU cache 中。
+
+而声明变量是 volatile 的，JVM 保证了每次读变量都从内存中读，跳过 CPU cache 这一步。
+
+volatile 性能：
+
+　　volatile 的读性能消耗与普通变量几乎相同，但是写操作稍慢，因为它需要在本地代码中插入许多内存屏障指令来保证处理器不发生乱序执行。
+
+ThreadLocal：会给每个线程拷贝私有的变量，也就是说，变量是线程私有的，不会独立出来。
+
+### 12、关于线程的锁机制
+
+多线程中的锁分为以下类别，后面逐步介绍：
+
+
+
+
+
+1、乐观锁与悲观锁：
+
+悲观锁和乐观锁是一种广义的概念，体现的是看待线程同步的不同的角度
+
+悲观锁认为自己在使用数据的时候，一定有别的线程来修改数据，在获取数据的时候会先加锁，确保数据不会被别的线程修改。
+
+锁实现：关键字synchronized、接口Lock的实现类
+
+使用的场景：写操作较多，先加锁可以保证写操作是数据正确
+
+乐观锁认为自己在使用数据的时候不会有其他的线程修改数据，所以不会添加锁，只是在更新数据的时候去判断之前有没有别的线程更新了这个数据
+锁实现：CAS算法
+使用场景：读操作较多，不加锁的特点能够使其读操作的性能大幅提升
+
+对于这个算法的实现实际上是，当拿到这个数据后，进行计算，然后去和变量进行比较，判断是否被修改，如果被修改，就将被修改的变量拿出来重新计算。
+
+
+
+## 十五、IO流
+
+> IO流是有起点与终止的有序的字节序列
+
+程序与外部进行数据交换可以使用IO流，这些流可以分为：
+
+* 输入/输出流：是以当前程序为中心，程序从外面读取数据是输入流，程序把数据保存到外面是输出流。
+* 字节流/字符流：如果是以字节为单位处理流中的数据就是字节流，如果是以字符为单位处理流中的数据就是字符流。
+* 节点流/处理流：如果直接操作数据源就是节点流，处理流不直接操作数据源，是对其他流的包装。
+
+在java.io包中字节流都是以stream单词结尾的，字符流都是以Reader /Writer结尾。
+
+![image-20201011182301468](img\image-20201011182301468.png)
+
+![image-20201011182550946](img\image-20201011182550946.png)
+
+> 下面就针对这些字符流/字节流做一系列的补充与讲解
+
+### 1、FileInputStream/FileOutputStream
+
+> fileInputStream: 作用是从文件中以字节为单位读取数据，是输入流，是字节流，是节点流
+
+```java
+//定义一个流来连接文件，从而读取数据
+FileInputStream fileInputStream = new FileInputStream("E:\\abc.txt");
+//存储的数据为abcdef   //注意的是一个英文字母占一个字节
+
+int read = fileInputStream.read();// 读取a 读到文件末尾，没有字节了，读到-1
+System.out.println((char) read);  // 强制转换，为a
+
+//获取还可以读取的字节
+//读取的时候，会有一个游标，读过后，游标会向后跳
+System.out.println(fileInputStream.available());  //5
+
+fileInputStream.skip(2);
+System.out.println(fileInputStream.available());  //跳过后，还剩下三个字节 3
+
+//关闭整个连接
+fileInputStream.close();
+```
+
+> 具体了解更多的话，关注官方API文档
+
+关于异常处理的相关方法：
+
+```java
+//手动指定异常捕获并关闭资源快
+    FileInputStream fileInputStream = null;
+    try {
+        //定义一个流来连接文件，从而读取数据
+        fileInputStream = new FileInputStream("E:\\abc.txt");
+        //存储的数据为abcdef   //注意的是一个英文字母占一个字节
+
+        int read = fileInputStream.read();// 读取a
+        System.out.println((char) read);  // 强制转换，为a
+
+        //获取还可以读取的字节
+        //读取的时候，会有一个游标，读过后，游标会向后跳
+        System.out.println(fileInputStream.available());  //5
+
+        fileInputStream.skip(2);
+        System.out.println(fileInputStream.available());  //跳过后，还剩下三个字节 3
+    } catch (IOException e) {
+        e.printStackTrace();
+    } finally {
+        //关闭整个连接
+        //如果上面产生异常，可能造成下面的空指针异常情况
+        if (fileInputStream!=null) {
+            try {
+                fileInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+>  注意的是,在jdk6之前，还是需要手动去释放资源，关闭连接的，但是7之后，就可以自动释放资源了。代码如下：
+
+```java
+//FileInputStream fileInputStream = null;
+try(
+    //定义一个流来连接文件，从而读取数据
+    //设置try资源快，注意，设置的时候，他的定义和初始化要写在一起
+    FileInputStream fileInputStream = new FileInputStream("E:\\abc.txt");
+//存储的数据为abcdef   //注意的是一个英文字母占一个字节
+){
+    int read = fileInputStream.read();// 读取a
+    System.out.println((char) read);  // 强制转换，为a
+
+    //获取还可以读取的字节
+    //读取的时候，会有一个游标，读过后，游标会向后跳
+    System.out.println(fileInputStream.available());  //5
+
+    fileInputStream.skip(2);
+    System.out.println(fileInputStream.available());  //跳过后，还剩下三个字节 3
+} catch (IOException e) {
+    e.printStackTrace();
+} 
+```
+
+> fileOutputStream: 向文件中写内容
+
+```java
+  try (
+        //向文件中写资源，如果没有文件就新建文件，如果有文件，就采取覆盖写的方式
+        //FileOutputStream os = new FileOutputStream("E://def.txt");
+        //向文件中写资源，如果没有文件就新建文件，如果有文件，就采取追加写的方式
+        FileOutputStream os = new FileOutputStream("E://def.txt",true)
+    ){
+        os.write('a');  //向文件中写一个int类型的，注意的是，在向文件转换的时候，还是会转为char,也就是a
+        os.write('b');   //对char类型的字母进行自动转换
+        //向windows中写入换行符   \r\n
+        os.write('\r');
+        os.write('\n');
+        byte [] bytes = "helloWorld".getBytes();   //将字符串转换为字符数组
+        os.write(bytes);  //将数组写入文件中
+        os.write('\r');
+        os.write('\n');
+        os.write(bytes,0,5);   //写固定长度的数字
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+### 2、缓冲字节流
+
+> bufferInputStream/bufferOutputStream
+
+![image-20201011202114049](img\image-20201011202114049.png)
+
+```java
+//        try(
+//            FileInputStream fis = new FileInputStream("E://def.txt");
+//            BufferedInputStream bis = new BufferedInputStream(fis);
+//        ){
+//            int i = bis.read();
+//            System.out.println(i);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+        //注意的是，这里即时没有关闭缓冲流，也能读数据
+        FileInputStream fis = new FileInputStream("E://def.txt");
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        int i = bis.read();
+        System.out.println(i);
+        byte [] bytes = new byte[1024];
+        bis.read(bytes);
+        System.out.println(new String(bytes));
+        
+        //最后要关闭缓冲流
+        bis.close();
+    }
+```
+
+```java
+//自动释放资源，否则的话，就要使用 //bos.close()  //bos.flush();
+try(
+    FileOutputStream fos = new FileOutputStream("E://def.txt");
+    BufferedOutputStream bos = new BufferedOutputStream(fos);
+){
+    //即使此时写了数据后，数据仍然在缓冲区
+    bos.write('z');
+    //调用后，清空缓存，数据才能到文件
+    //bos.close();
+    //bos.flush();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+> 对于以上的方式，可以用来实现文件的上传中的文件复制的操作，一般文件的复制操作，使用的是字节数组进行复制，而不是单个字节的复制，用来提高复制的效率。
+
+### 3、DataInputStream/DataOutPutStream
+
+> 读写数据时，可以带有数据格式
+
+```java
+//使用DataOutputStream向文件中写带有格式的数据
+ FileOutputStream fos = new FileOutputStream("E://out.txt");
+ DataOutputStream dos = new DataOutputStream(fos);
+
+ dos.writeInt(125);
+ dos.writeBoolean(false);
+ dos.writeDouble(3.145);
+ dos.writeChar('h');
+
+ dos.close();
+
+ //值得注意的是，写在文件中的数据是不能直接进行打开查看的，会呈现乱码
+ //并且在读数据的同时，必须按照顺序进行读，否则的话，会出现相关的问题
+```
+
+```java
+ FileInputStream fis = new FileInputStream("E://out.txt");
+       DataInputStream dis = new DataInputStream(fis);
+       
+       //按照写的顺序进行读值
+        int i = dis.readInt();
+        boolean b = dis.readBoolean();
+        double v = dis.readDouble();
+        char c = dis.readChar();
+        System.out.println(i);
+        System.out.println(b);
+        System.out.println(v);
+        System.out.println(c);
+        
+//        dos.writeInt(125);
+//        dos.writeBoolean(false);
+//        dos.writeDouble(3.145);
+//        dos.writeChar('h');
+```
+
+### 4、对象序列化/反
+
+> 对象序列化就是把一个对象转换为01二进制序列
+>
+> 对象的反序列化就是将一组01二进制转换为对象
+
+在java中使用ObjectOutputStream实现对象的序列化，可以简单理解为将对象保存到文件中。使用ObjectInputStream进行反序列化，简单的理解为将把文件中的对象取出来。
+
+对象序列化/反序列化的前提是对象的类要实现Serializable接口，Serializable接口是一个标志接口，没有任何成员，就是告诉编译器可以进行反序列化。
+
+```java
+//实现序列化
+FileOutputStream fos = new FileOutputStream("E://oos.txt");
+ObjectOutputStream oos = new ObjectOutputStream(fos);
+Person person = new Person();
+person.setName("曾");
+person.setInfo("哈哈");
+oos.writeObject(person);
+oos.close();
+```
+
+```java
+//反序列化
+FileInputStream fis = new FileInputStream("E:\\oos.txt");
+ObjectInputStream ois = new ObjectInputStream(fis);
+Object object = ois.readObject();
+ois.close();
+System.out.println(object);
+```
+
+> 值得注意的是：当对象序列化后，即把对象保存到文件之后，如果又修改了Person类的结构，比如增加一个字段，再进行反序列化时，会产生java.io.invalidClassException类无效异常
+>
+> 类实现了Serializeble接口后，系统会自动的增加一个serialversionUID序列化版本号，然后在序列化的过程中进行保存到文件中。当改了这个类的结构时，系统就会重新生成一个该字段，当进行反序列化时，系统就会把文件中的该字段与当前字节码文件中的序列化字段进行比较，如果不相等，就会认为这不是同一个类，会产生异常。
+>
+> 结论：当一个类实现了Serializable接口后，一般会手动的添加一个序列化版本号字段：
+
+```java
+private static final long serialVersionUID = -5140816145008968598L;
+```
+
+> 同时注意的是，如果对多个对象进行序列化操作，应尽可能的将对象存储到链表或者是map集合中去，再进行反序列化的操作。而不是进行多次的序列化操作。
+
+序列化的作用：
+
+用于对象的持久化，将对象写到硬盘中，需要用的时候再反序列化取出来。 所谓序列化其实就是将程序中的数据(对象)通过某种方式，保存到本地中。 然后可以在程序关闭之后还保存程序的某个执行状态，方便在程序下次 执行的时候通过"反序列化"读取出来，并且能够还原数据的类型，从而延续程序退出时的状态。 一般来说，我们会使用序列化保存一些需要持久化的数据，当然如果这个数据会比较庞大的话， 我们就直接使用数据库了！所以，序列化实际上目前很多领域用的已经不多了，大部分使用 都已被数据库替代了！ 
+
+### 5、printStream
+
+> 打印字节流
+
+```java
+FileOutputStream fos = new FileOutputStream("E:\\test.txt");
+PrintStream printStream = new PrintStream(fos);
+printStream.print("haha");
+printStream.println("xixi");
+System.out.println("这是控制台的数据");
+System.setOut(printStream);
+System.out.println("这个数字将会转换到文本中去而不是控制台");
+
+//异常的打印
+
+try {
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("abcdes");
+} catch (Exception e) {
+    e.printStackTrace(printStream);
+}
+printStream.close();
+```
+
+### 6、FileReader/FileWriter
+
+> fileReader是以字符为单位读取文件中的内容，字符流，输入流，节点流。
+>
+> fileWriter是以字符为单位把数据保存到文件中，字符流，输入流，节点流。
+
+注意：
+
+* FileReader/FileWriter只能读写纯文本文件
+* 要求读写的文本文件的编码格式与当前环境的编码格式兼容
+* 如果是覆盖写，则会让文本的编码格式与环境相同
+* 如果是追加写，则会判断文本编码格式与环境是否相同，如果不同，就会出现乱码。
+* 其他操作同InputStream相似。
+
+### 7、转换流
+
+> InputStreamreader: 将字节流以指定的边么格式转换为字符流
+
+![image-20201012181251824](img\image-20201012181251824.png)
+
+> outputStreamWriter: 将字符流转换为指定格式的字节流
+
+![image-20201012181603053](img\image-20201012181603053.png)
+
+### 8、缓冲流
+
+![image-20201012182021684](img\image-20201012182021684.png)
+
+![image-20201012182428145](img\image-20201012182428145.png)
