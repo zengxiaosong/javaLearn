@@ -15,6 +15,16 @@
   * [Mybatis](./document/framework/Mybatis.md)
   * [ssm框架整合](./document/framework/ssm.md)
   * [springboot](./document/framework/springboot.md)
+  * [NoSQL](.document/framework/NoSql/NoSql.md)
+  * [redis](./document/framework/NoSql/redis.md)
+* 零散新知识学习
+  * 数据库相关
+    * [分页查询](./document/develop-tech/datebase/paging_query.md)
+* 数据库相关
+  * [oracle相关](.document/sql/oracle/sql_ofen.md)
+  * [常用sql](.document/sql/sql_language/sql_ofen.md)
+  * [kettle工具](.document/sql/other/kettle.md)
+  * [数据仓库](.document/sql/other/DB_Info.md)
 * 面试题相关
   * [java相关面试题](./document/face/java/interview.md)
 
