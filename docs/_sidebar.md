@@ -15,7 +15,7 @@
   * [Mybatis](./document/framework/Mybatis.md)
   * [ssm框架整合](./document/framework/ssm.md)
   * [springboot](./document/framework/springboot.md)
-  * [分布式与NoSQL](.document/framework/NoSql/NoSql.md)
+  * [分布式与NoSQL](./document/framework/NoSql/NoSql.md)
   * [redis](./document/framework/NoSql/redis.md)
 * 零散新知识学习
   * 数据库相关
