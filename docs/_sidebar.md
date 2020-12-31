@@ -17,6 +17,8 @@
   * [springboot](./document/framework/springboot.md)
   * [分布式与NoSQL](./document/framework/NoSql/nosqlother.md)
   * [redis](./document/framework/NoSql/redis.md)
+* 分布式与微服务
+  * [springcloud](./document/framework/springcloud/springcloud.md)
 * 零散新知识学习
   * 数据库相关
     * [分页查询](./document/develop-tech/datebase/paging_query.md)
