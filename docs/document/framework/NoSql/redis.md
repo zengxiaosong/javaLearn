@@ -310,3 +310,96 @@
 
 ### 6、set集合
 
+> set集合作为不可重复的键值对。
+
+* sadd   set   value      # 向集合中添加值，并且，值是不会重复的。
+
+![image-20210105141318886](img\image-20210105141318886.png)
+
+* smember  set    #  查看指定set的所有的值。
+
+![image-20210105143841707](img\image-20210105143841707.png)
+
+* sismember set value     # 判断某个值是否在该集合内。
+
+![image-20210105144639147](img\image-20210105144639147.png)
+
+* scard  set   #  查看集合里面的数目
+
+![image-20210105151319735](img\image-20210105151319735.png)
+
+* srem  set  value   #  指定移除set集合中的元素。
+
+![image-20210105151832332](img\image-20210105151832332.png)
+
+* SRANDMEMBER myset1  count    # 随机获取指定集合中的count个数的值。获取的值不具备顺序。
+
+![image-20210105153047599](img\image-20210105153047599.png)
+
+* SPOP  set     # 随机删除集合中的某个元素，并且返回该元素。如果集合为空，没有元素了，就应返回null。
+
+![image-20210105153923259](img\image-20210105153923259.png)
+
+* smove  source  destin  value     #   将source集合中的某个value移动到destin集合中。
+
+![image-20210105154744413](img\image-20210105154744413.png)
+
+* sdiff  set1  set2      #   求set1集合与set2集合之间的差集，也就是说set1-set2（set1中独有的）。
+
+![image-20210105160306376](E:\myStudy\docisfy\javaLearn\docs\document\framework\NoSql\img\image-20210105160306376.png)
+
+* sinter   set1   set2   #    求两个集合之间的交集操作。
+
+![image-20210105160456160](E:\myStudy\docisfy\javaLearn\docs\document\framework\NoSql\img\image-20210105160456160.png)
+
+* SUNION set1 set2    #  求两个集合的并集操作。
+
+![image-20210105160637943](img\image-20210105160637943.png)
+
+### 7、hash集合
+
+> map集合，具体来讲是key-map，对应设置键key。对应的值是一个map集合，本质上和 String没有太大的区别，但是value本质上还是属于 key-value类型的。
+
+对应相关的命令如下：
+
+* hset key field value      #    向该hash中添加键值对。
+
+![image-20210105162900434](img\image-20210105162900434.png)
+
+* hget  key  field      #    获取该hash中的某个键值对。
+
+![image-20210105163334357](img\image-20210105163334357.png)
+
+* hgetall   key    #  获取hash集合中的所有字段。
+
+![image-20210105164326407](img\image-20210105164326407.png)
+
+* hmset    key      field   value   field   value    #   向该hash中添加多个键值对。
+
+![image-20210105164744530](img\image-20210105164744530.png)
+
+* hmget    key    field     field     #  获取hash表中的多个字段。
+
+![image-20210105165134321](img\image-20210105165134321.png)
+
+* hdel    key   field    field   #   删除hash中指定的key的field ,对应删除相关的键值对。
+
+![image-20210105165823722](img\image-20210105165823722.png)
+
+* hlen  key    #  获取指定hash表的长度。
+
+![image-20210105171050565](img\image-20210105171050565.png)
+
+* HEXISTS key  field     #  判断hash表中某个字段是否存在，如果存在返回1, 不存在则返回0。
+
+![image-20210105171621719](img\image-20210105171621719.png)
+
+* hkeys    key     #   获取hash表中的所有键，（仅仅只是获取键，而不是获取值）
+
+![image-20210105171935848](img\image-20210105171935848.png)
+
+* HVALS   key      #  获取hash表中所有的值
+
+![image-20210105172307687](img\image-20210105172307687.png)
+
+* 
