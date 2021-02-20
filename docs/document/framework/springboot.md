@@ -870,3 +870,87 @@ public String first(Map map){
 
 ## 七、springboot-crud
 
+
+
+## 八、springboot注解解析
+
+> 这里先就注解的使用等进行说明，再对原理以及源码等层次的东西进行理解。
+
+### @Configuration
+
+> @Configuration用于定义配置类，可替换xml配置文件，被注解的类内部包含有一个或多个被@Bean注解的方法，这些方法将会被AnnotationConfigApplicationContext或AnnotationConfigWebApplicationContext类进行扫描，并用于构建bean定义，初始化Spring容器。
+
+### @ComponentScan
+
+> 扫描对应存在的组件，也就是扫描包中有@Component注解的组件，将其组件放到bean容器中。
+
+### @Data
+
+> @Data注解属于元注解类型的，主要目的就是为了给一个类做配置。当然，对应的如下面的这些注解也是如此。
+
+* @Data ：注解在类上；提供类所有属性的 getting 和 setting 方法，此外还提供了equals、canEqual、hashCode、toString 方法
+* @Setter：注解在属性上；为属性提供 setting 方法
+* @Getter：注解在属性上；为属性提供 getting 方法
+* @Log4j ：注解在类上；为类提供一个 属性名为log 的 log4j 日志对象
+* @NoArgsConstructor：注解在类上；为类提供一个无参的构造方法
+* @AllArgsConstructor：注解在类上；为类提供一个全参的构造方法
+
+### @ConditionalOnClass
+
+> 通俗的来说，就是当这个代码标注在类上时，当类路径下存在参数中的类的时候，该被标注的配置类下的所有@bean才能生效。对于里面更加深层次的，也就是此注解中还有@Conditional, 下面做进一步说明：
+
+### @Conditional
+
+> @Conditional注解就是用来判断某个类是否应该被注入到spring容器中，具体是怎么执行的，看该注解的源码发现：传入进来的参数，也就是class数组中的类应该是要是是实现Condition接口的。
+
+```java
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface Conditional {
+
+   /**
+    * All {@link Condition Conditions} that must {@linkplain Condition#matches match}
+    * in order for the component to be registered.
+    */
+   Class<? extends Condition>[] value();
+
+}
+```
+
+> 下面看看该接口是怎么样的呢？具体要实现哪些方法？
+
+```java
+@FunctionalInterface
+public interface Condition {
+
+   /**
+    * Determine if the condition matches.
+    * @param context the condition context
+    * @param metadata metadata of the {@link org.springframework.core.type.AnnotationMetadata class}
+    * or {@link org.springframework.core.type.MethodMetadata method} being checked
+    * @return {@code true} if the condition matches and the component can be registered,
+    * or {@code false} to veto the annotated component's registration
+    */
+   boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata);
+
+}
+```
+
+> 也就是说传入进来的参数必须实现该类接口并且返回值为true，才能在@@ConditionalOnClass下注入成功。
+
+### @EnableConfigurationProperties
+
+> 对于一般的配置，要想加载配置文件，首先是将配置文件中的属性用@ConfigurationProperties加载到bean中，但是这时，spring的bean容器中还是没有相应的bean的，要通过@EnableConfigurationProperties注解才能将该bean进行加载。
+
+### @Import
+
+> 使用@import的作用是将该类注入到spring容器中，值得注意的是，@import的注入是通过添加@Component注解来实现的。也就类似用@Configuration和@Bean向容器中放实例，不过两者间是有区别的。
+
+### @ConditionalOnProperty
+
+> 判断配置文件中的属性是否存在以及配置文件中的属性值是否与我们预定的属性值相同。
+
+### @ConditionalOnMissingBean
+
+> 判断当前类中是否存在该类bean，如果存在就不注入，如果不存在，就进行注入。
